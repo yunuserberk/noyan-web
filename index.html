@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noyan Furniture – Ana Panel</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; }
+  [v-cloak] { display: none; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Inter', Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: #F7F3EE;
+    margin: 0;
+    color: #1C1008;
+  }
+
+  /* Sidebar transition */
+  .sb-transition { transition: width 0.22s cubic-bezier(.4,0,.2,1); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 5px; height: 5px; }
+  ::-webkit-scrollbar-track { background: #F7F3EE; }
+  ::-webkit-scrollbar-thumb { background: #D4AE8C; border-radius: 3px; }
+
+  /* Card hover lift */
+  .app-card {
+    transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  }
+  .app-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(92,58,30,.10), 0 2px 8px rgba(92,58,30,.06);
+    border-color: #D4AE8C !important;
+  }
+
+  /* Nav item */
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 10px; border-radius: 8px; cursor: pointer;
+    font-size: 13px; font-weight: 500;
+    transition: background .15s, color .15s;
+    text-decoration: none;
+    color: #6B5B4E;
+    margin: 1px 6px;
+    white-space: nowrap;
+    border: none; background: none; width: calc(100% - 12px);
+    text-align: left;
+  }
+  .nav-item:hover { background: #F0EAE2; color: #2C1A0E; }
+  .nav-item.active { background: #5C3A1E; color: #fff; }
+  .nav-item.active:hover { background: #7A4E2D; }
+
+  /* Icon wrapper */
+  .nav-icon { width: 20px; height: 20px; flex-shrink: 0; display:flex; align-items:center; justify-content:center; }
+
+  /* Stat card number animation */
+  .stat-num { font-variant-numeric: tabular-nums; }
+
+  /* Tag chip */
+  .chip {
+    display: inline-flex; align-items: center;
+    padding: 3px 10px; border-radius: 20px;
+    font-size: 10px; font-weight: 600;
+    background: #F0EAE2; color: #7A4E2D;
+    border: 1px solid #E2D9CE;
+  }
+</style>
+</head>
+<body>
+<div id="app" v-cloak class="flex h-screen overflow-hidden">
+
+  <!-- ══════════ SIDEBAR ══════════ -->
+  <aside :class="[open ? 'w-52' : 'w-14', 'sb-transition flex-shrink-0 flex flex-col z-30']"
+         style="background:#FAF7F4; border-right:1px solid #E2D9CE;">
+
+    <!-- Brand -->
+    <div class="flex items-center gap-2.5 px-3 py-4" style="border-bottom:1px solid #E2D9CE; min-height:57px;">
+      <div class="flex-shrink-0 w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold"
+           style="background:linear-gradient(145deg,#5C3A1E,#9A6840);">N</div>
+      <div v-if="open" class="overflow-hidden">
+        <div style="font-size:12px; font-weight:800; color:#3D2410; letter-spacing:.3px; white-space:nowrap;">NOYAN FURNITURE</div>
+        <div style="font-size:9px; font-weight:600; color:#B5803A; letter-spacing:1.5px; text-transform:uppercase;">Management</div>
+      </div>
+    </div>
+
+    <!-- Toggle -->
+    <button @click="open=!open"
+            class="flex items-center justify-center flex-shrink-0"
+            style="height:36px; border-bottom:1px solid #E2D9CE; color:#A8957F; background:none; border-top:none; border-left:none; border-right:none; cursor:pointer; transition:background .15s;"
+            @mouseenter="$event.target.style.background='#F0EAE2'"
+            @mouseleave="$event.target.style.background='transparent'">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path :d="open ? 'M11 19l-7-7 7-7m8 14l-7-7 7-7' : 'M13 5l7 7-7 7M5 5l7 7-7 7'"/>
+      </svg>
+    </button>
+
+    <!-- Nav -->
+    <nav class="flex-1 py-2 overflow-y-auto overflow-x-hidden">
+
+      <div v-if="open" style="font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#C8BAA8; padding:8px 14px 4px;">
+        Dahili
+      </div>
+
+      <button v-for="item in navItems" :key="item.id"
+              class="nav-item" :class="{ active: active === item.id }"
+              @click="active = item.id">
+        <span class="nav-icon" v-html="item.icon"></span>
+        <span v-if="open" style="overflow:hidden; text-overflow:ellipsis;">{{ item.label }}</span>
+      </button>
+
+      <div v-if="open" style="font-size:9px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#C8BAA8; padding:16px 14px 4px;">
+        Uygulamalar
+      </div>
+      <div v-if="!open" style="border-top:1px solid #E2D9CE; margin:8px 6px;"></div>
+
+      <a v-for="app in appLinks" :key="app.href"
+         :href="app.href"
+         class="nav-item" style="text-decoration:none;">
+        <span class="nav-icon" v-html="app.icon"></span>
+        <span v-if="open" style="overflow:hidden; text-overflow:ellipsis;">{{ app.label }}</span>
+      </a>
+    </nav>
+
+    <div v-if="open" style="padding:10px 14px; border-top:1px solid #E2D9CE; font-size:10px; color:#C8BAA8;">
+      v1.0
+    </div>
+  </aside>
+
+  <!-- ══════════ MAIN ══════════ -->
+  <div class="flex-1 flex flex-col overflow-hidden">
+
+    <!-- Header -->
+    <header class="flex items-center justify-between flex-shrink-0 px-6 py-3"
+            style="background:#fff; border-bottom:1px solid #E2D9CE; min-height:57px;">
+      <div>
+        <h1 style="font-size:15px; font-weight:700; color:#1C1008; letter-spacing:-.2px;">
+          {{ navItems.find(n=>n.id===active)?.title || 'Ana Panel' }}
+        </h1>
+        <p style="font-size:11px; color:#A8957F; margin-top:1px;">
+          {{ todayStr }}
+        </p>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <main class="flex-1 overflow-y-auto p-5 sm:p-7">
+
+      <!-- ── DASHBOARD ── -->
+      <div v-if="active==='dashboard'">
+
+        <!-- Welcome banner -->
+        <div class="rounded-2xl p-6 mb-6 flex items-center gap-5"
+             style="background:linear-gradient(135deg,#5C3A1E 0%,#9A6840 100%); color:#fff;">
+          <div style="font-size:40px; line-height:1;">🪵</div>
+          <div>
+            <div style="font-size:20px; font-weight:800; letter-spacing:-.3px;">Hoş geldiniz, Noyan Furniture</div>
+            <div style="font-size:13px; opacity:.8; margin-top:4px;">Proje yönetimi, belgeler ve müşteri formları tek panelde.</div>
+          </div>
+        </div>
+
+        <!-- App Cards -->
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#C8BAA8; margin-bottom:14px;">Uygulamalar</div>
+        <div class="grid gap-4" style="grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); margin-bottom:32px;">
+
+          <a href="mobilya-panel.html" class="app-card block rounded-2xl p-5 no-underline"
+             style="background:#fff; border:1px solid #E2D9CE; text-decoration:none; position:relative; overflow:hidden;">
+            <div style="position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,#5C3A1E,#B88A63);"></div>
+            <div style="font-size:28px; margin-bottom:12px;">📊</div>
+            <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#B5803A; margin-bottom:5px;">Proje Yönetimi</div>
+            <div style="font-size:16px; font-weight:700; color:#2C1A0E; margin-bottom:8px; letter-spacing:-.2px;">Üretim & Proje Paneli</div>
+            <div style="font-size:12px; color:#6B5B4E; line-height:1.6; margin-bottom:14px;">Tekliften teslimata tüm süreçleri yönetin. Pipeline, fason, ödeme ve QC takibi.</div>
+            <div class="flex flex-wrap gap-1">
+              <span class="chip">Pipeline</span><span class="chip">Fason</span><span class="chip">Ödeme</span><span class="chip">QC</span>
+            </div>
+          </a>
+
+          <a href="dokuman-formlar.html" class="app-card block rounded-2xl p-5 no-underline"
+             style="background:#fff; border:1px solid #E2D9CE; text-decoration:none; position:relative; overflow:hidden;">
+            <div style="position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,#8B6914,#D4A855);"></div>
+            <div style="font-size:28px; margin-bottom:12px;">📋</div>
+            <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#B5803A; margin-bottom:5px;">Resmi Belgeler</div>
+            <div style="font-size:16px; font-weight:700; color:#2C1A0E; margin-bottom:8px; letter-spacing:-.2px;">SPK & Penawaran Harga</div>
+            <div style="font-size:12px; color:#6B5B4E; line-height:1.6; margin-bottom:14px;">İş emri, müşteri talep formu ve fiyat teklifi oluşturun. M³ otomatik hesaplanır.</div>
+            <div class="flex flex-wrap gap-1">
+              <span class="chip">SPK</span><span class="chip">Teklif</span><span class="chip">M³ Otomatis</span><span class="chip">Cetak</span>
+            </div>
+          </a>
+
+          <a href="customer-request-form.html" class="app-card block rounded-2xl p-5 no-underline"
+             style="background:#fff; border:1px solid #E2D9CE; text-decoration:none; position:relative; overflow:hidden;">
+            <div style="position:absolute; top:0; left:0; right:0; height:3px; background:linear-gradient(90deg,#3A7D44,#6DB87A);"></div>
+            <div style="font-size:28px; margin-bottom:12px;">📝</div>
+            <div style="font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:1.5px; color:#3A7D44; margin-bottom:5px;">Customer Facing</div>
+            <div style="font-size:16px; font-weight:700; color:#2C1A0E; margin-bottom:8px; letter-spacing:-.2px;">Customer Request Form</div>
+            <div style="font-size:12px; color:#6B5B4E; line-height:1.6; margin-bottom:14px;">Müşterilerin doldurabileceği İngilizce sipariş talep formu. Fotoğraf ve ölçü destekli.</div>
+            <div class="flex flex-wrap gap-1">
+              <span class="chip">English</span><span class="chip">Photo Upload</span><span class="chip">Public</span>
+            </div>
+          </a>
+
+        </div>
+
+        <!-- Info footer -->
+        <div class="rounded-xl p-4 flex items-center gap-3"
+             style="background:#F0EAE2; border:1px solid #E2D9CE;">
+          <div style="font-size:20px;">💡</div>
+          <div style="font-size:12px; color:#6B5B4E; line-height:1.6;">
+            <strong style="color:#3D2410;">Başlamak için</strong> yukarıdaki kartlardan birini tıklayın veya soldaki menüyü kullanın.
+            Tüm veriler tarayıcınıza (localStorage) kaydedilir — internet bağlantısı gerekmez.
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── HAKKINDA ── -->
+      <div v-if="active==='hakkinda'">
+        <div class="rounded-2xl p-6 mb-5" style="background:#fff; border:1px solid #E2D9CE;">
+          <div style="font-size:13px; font-weight:700; color:#3D2410; margin-bottom:16px; text-transform:uppercase; letter-spacing:.5px;">Sistem Bilgisi</div>
+          <div class="grid gap-3" style="grid-template-columns:1fr 1fr;">
+            <div v-for="info in sysInfo" :key="info.label"
+                 class="rounded-xl p-4" style="background:#FAF7F4; border:1px solid #E2D9CE;">
+              <div style="font-size:10px; color:#A8957F; font-weight:600; text-transform:uppercase; letter-spacing:1px; margin-bottom:4px;">{{ info.label }}</div>
+              <div style="font-size:14px; font-weight:600; color:#2C1A0E;">{{ info.value }}</div>
+            </div>
+          </div>
+        </div>
+        <div class="rounded-2xl p-6" style="background:#fff; border:1px solid #E2D9CE;">
+          <div style="font-size:13px; font-weight:700; color:#3D2410; margin-bottom:12px; text-transform:uppercase; letter-spacing:.5px;">Dosya Dizini</div>
+          <div v-for="file in fileList" :key="file.name"
+               class="flex items-center gap-3 py-2.5" style="border-bottom:1px solid #F0EAE2;">
+            <span style="font-size:16px;">{{ file.icon }}</span>
+            <div style="flex:1;">
+              <div style="font-size:13px; font-weight:600; color:#2C1A0E;">{{ file.name }}</div>
+              <div style="font-size:11px; color:#A8957F;">{{ file.desc }}</div>
+            </div>
+            <a :href="file.href" style="font-size:11px; font-weight:600; color:#B5803A; text-decoration:none; padding:4px 10px; border:1px solid #D4AE8C; border-radius:6px;">Aç →</a>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+</div>
+
+<script>
+const { createApp, ref, computed } = Vue;
+
+createApp({
+  setup() {
+    const open = ref(true);
+    const active = ref('dashboard');
+
+    const navItems = [
+      {
+        id: 'dashboard',
+        label: 'Ana Sayfa',
+        title: 'Ana Panel',
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>`
+      },
+      {
+        id: 'hakkinda',
+        label: 'Sistem Bilgisi',
+        title: 'Sistem Bilgisi',
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`
+      },
+    ];
+
+    const appLinks = [
+      {
+        href: 'mobilya-panel.html',
+        label: 'Proje Paneli',
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>`
+      },
+      {
+        href: 'dokuman-formlar.html',
+        label: 'SPK & Formlar',
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`
+      },
+      {
+        href: 'customer-request-form.html',
+        label: 'Müşteri Formu',
+        icon: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>`
+      },
+    ];
+
+    const today = new Date();
+    const todayStr = today.toLocaleDateString('tr-TR', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+    const sysInfo = [
+      { label: 'Şirket', value: 'Noyan Furniture' },
+      { label: 'Sürüm', value: '1.0.0' },
+      { label: 'Uygulama Sayısı', value: '3' },
+      { label: 'Veri Depolama', value: 'LocalStorage (Tarayıcı)' },
+      { label: 'Framework', value: 'Vue 3 + Tailwind CSS' },
+      { label: 'Platform', value: 'Web (HTML)' },
+    ];
+
+    const fileList = [
+      { icon:'📊', name:'mobilya-panel.html', desc:'Üretim ve proje yönetim paneli', href:'mobilya-panel.html' },
+      { icon:'📋', name:'dokuman-formlar.html', desc:'SPK, Talep ve Teklif formları (Endonezce)', href:'dokuman-formlar.html' },
+      { icon:'📝', name:'customer-request-form.html', desc:'Müşteri talep formu (İngilizce)', href:'customer-request-form.html' },
+    ];
+
+    return { open, active, navItems, appLinks, todayStr, sysInfo, fileList };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

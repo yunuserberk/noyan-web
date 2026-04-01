@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Customer Request Form – Noyan Furniture</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Inter', Arial, sans-serif; background: #F7F3EE; margin: 0; }
+
+  .doc-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .doc-table th {
+    background: #5C3A1E; color: #fff; font-weight: 700;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px;
+    padding: 9px 7px; white-space: nowrap; border: 1px solid #3D2410;
+    vertical-align: middle; text-align: center;
+  }
+  .doc-table td {
+    padding: 6px 7px; border: 1px solid #d1d5db;
+    vertical-align: top; font-size: 11px; color: #1e293b;
+  }
+  .doc-table tbody tr:nth-child(even) td { background: #f8fafc; }
+  .doc-table tbody tr:hover td { background: #eff6ff; }
+
+  .fi { width:100%; border:1px solid #e2e8f0; border-radius:3px; padding:4px 6px; font-size:11px; font-family:'Inter',sans-serif; outline:none; background:#fff; color:#1e293b; }
+  .fi:focus { border-color:#5C3A1E; box-shadow:0 0 0 2px rgba(92,58,30,0.12); }
+  .fi-sm { width:68px; text-align:center; }
+  textarea.fi { resize:vertical; min-height:38px; }
+
+  .sec-head { background:#5C3A1E; color:#fff; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:0.6px; padding:7px 12px; }
+  .sec-body { border:1px solid #d1d5db; border-top:none; padding:12px; }
+
+  .logo-ph { width:130px; height:65px; border:2px dashed #94a3b8; border-radius:4px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#94a3b8; font-size:9px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; cursor:pointer; }
+  .logo-ph:hover { border-color:#5C3A1E; color:#5C3A1E; }
+  .logo-img { width:130px; height:65px; object-fit:contain; border-radius:4px; }
+
+  .photo-wrap { display:flex; flex-direction:column; align-items:center; gap:3px; min-height:70px; min-width:95px; }
+  .photo-thumb { width:88px; height:66px; object-fit:cover; border-radius:3px; border:1px solid #e2e8f0; display:block; }
+  .photo-btn { display:flex; align-items:center; gap:3px; font-size:9px; font-weight:600; color:#5C3A1E; cursor:pointer; padding:3px 7px; border:1px solid #5C3A1E; border-radius:3px; background:#fff; white-space:nowrap; }
+  .photo-btn:hover { background:#5C3A1E; color:#fff; }
+  .photo-del { font-size:9px; color:#ef4444; cursor:pointer; margin-left:2px; }
+
+  .gold-line { height:3px; background:linear-gradient(90deg,#B5803A,#D4A855,#B5803A); }
+
+  .action-bar { position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #e2e8f0; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; z-index:100; box-shadow:0 -2px 10px rgba(0,0,0,.08); }
+
+  .tbl-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+  @media print {
+    .no-print { display:none !important; }
+    body { background:#fff !important; }
+    .print-wrap { box-shadow:none !important; margin:0 !important; }
+    .doc-table td, .doc-table th { font-size:10px; padding:4px 5px; }
+    .fi { border:none; padding:0; background:transparent; }
+    textarea.fi { border:none; resize:none; }
+    .photo-thumb { width:75px; height:56px; }
+    .action-bar { display:none !important; }
+    .app-nav { display:none !important; }
+    @page { size: A3 landscape; margin: 12mm 10mm; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- NAV -->
+  <div class="app-nav no-print" style="background:#5C3A1E; padding:10px 20px; display:flex; align-items:center; gap:16px;">
+    <div style="color:#B5803A; font-weight:800; font-size:15px; letter-spacing:1px;">NOYAN FURNITURE</div>
+    <div style="color:#94a3b8; font-size:12px;">│</div>
+    <div style="color:#cbd5e1; font-size:12px;">Customer Request Form</div>
+  </div>
+
+  <!-- FORM -->
+  <div style="padding:20px 20px 80px;">
+  <div class="print-wrap" style="background:#fff; box-shadow:0 1px 12px rgba(0,0,0,.1); padding:28px 32px;">
+
+    <!-- HEADER -->
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px;">
+
+      <!-- Logo -->
+      <div>
+        <label class="no-print" style="cursor:pointer;">
+          <div class="logo-ph" v-if="!companyLogo">
+            <div style="font-size:22px; margin-bottom:2px;">🏢</div>
+            <div>COMPANY</div><div>LOGO</div>
+          </div>
+          <img v-else :src="companyLogo" class="logo-img"/>
+          <input type="file" accept="image/*" style="display:none;" @change="uploadLogo($event)"/>
+        </label>
+        <img v-if="companyLogo" :src="companyLogo" class="logo-img" style="display:block;"/>
+      </div>
+
+      <!-- Title -->
+      <div style="text-align:center; flex:1; margin:0 28px;">
+        <div style="font-size:22px; font-weight:900; color:#5C3A1E; letter-spacing:3px; text-transform:uppercase;">Customer Request Form</div>
+        <div style="font-size:10px; font-weight:600; color:#94a3b8; letter-spacing:2px; margin-top:3px;">FURNITURE ORDER INQUIRY</div>
+        <div class="gold-line" style="margin-top:7px;"></div>
+        <div style="font-size:9px; color:#cbd5e1; margin-top:4px; letter-spacing:0.5px;">Please complete all fields. Our team will prepare a quotation based on your requirements.</div>
+      </div>
+
+      <!-- Form Meta -->
+      <div style="text-align:right; font-size:11px; min-width:210px;">
+        <div style="display:flex; align-items:center; justify-content:flex-end; gap:8px; margin-bottom:5px;">
+          <span style="color:#64748b; font-weight:600; font-size:10px;">Form No.</span>
+          <input v-model="form.nomorForm" class="fi" style="width:110px; text-align:right;" placeholder="REQ-001"/>
+        </div>
+        <div style="display:flex; align-items:center; justify-content:flex-end; gap:8px; margin-bottom:5px;">
+          <span style="color:#64748b; font-weight:600; font-size:10px;">Date</span>
+          <input type="date" v-model="form.tanggal" class="fi" style="width:130px;"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- DIVIDER -->
+    <div style="border-top:1px solid #e2e8f0; margin:14px 0;"></div>
+
+    <!-- CUSTOMER INFO -->
+    <div style="margin-bottom:16px;">
+      <div class="sec-head">👤 Customer Information</div>
+      <div class="sec-body">
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px;">
+          <div>
+            <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Full Name / Company Name <span style="color:#ef4444;">*</span></div>
+            <input v-model="form.namaPelanggan" class="fi" placeholder="Your full name or company"/>
+          </div>
+          <div>
+            <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Phone / WhatsApp <span style="color:#ef4444;">*</span></div>
+            <input v-model="form.telepon" class="fi" placeholder="+62 ..."/>
+          </div>
+          <div>
+            <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Email Address</div>
+            <input v-model="form.email" class="fi" placeholder="email@domain.com"/>
+          </div>
+          <div>
+            <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Delivery Address <span style="color:#ef4444;">*</span></div>
+            <input v-model="form.alamat" class="fi" placeholder="Full delivery address"/>
+          </div>
+          <div>
+            <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Project Name (if any)</div>
+            <input v-model="form.proyek" class="fi" placeholder="e.g. Dubai Villa, Office Renovation"/>
+          </div>
+          <div>
+            <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px;">Expected Completion By</div>
+            <input type="date" v-model="form.targetSelesai" class="fi"/>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PRODUCT TABLE -->
+    <div style="margin-bottom:14px;">
+      <div class="sec-head">📦 Product Details — Please list each item separately</div>
+      <div class="tbl-wrap">
+        <table class="doc-table" style="min-width:900px;">
+          <thead>
+            <tr>
+              <th style="width:32px;">NO</th>
+              <th style="width:105px;">PHOTO /<br/>REFERENCE</th>
+              <th style="width:165px;">PRODUCT NAME <span style="font-weight:400; font-size:9px; opacity:.8;">(e.g. Dining Table, Wardrobe)</span></th>
+              <th style="width:195px;">DESCRIPTION / DETAILS <span style="font-weight:400; font-size:9px; opacity:.8;">(material, color, finish, style)</span></th>
+              <th style="width:65px;">L (cm)<br/><span style="font-weight:400; font-size:9px;">Length</span></th>
+              <th style="width:65px;">W (cm)<br/><span style="font-weight:400; font-size:9px;">Width</span></th>
+              <th style="width:65px;">H (cm)<br/><span style="font-weight:400; font-size:9px;">Height</span></th>
+              <th style="width:72px;">M³<br/><span style="font-weight:400; font-size:9px;">Volume</span></th>
+              <th style="width:50px;">QTY</th>
+              <th style="width:130px;">REMARKS / NOTES</th>
+              <th class="no-print" style="width:36px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row,i) in form.rows" :key="row.id">
+              <td style="text-align:center; font-weight:700; color:#64748b; font-size:13px;">{{ i+1 }}</td>
+              <td>
+                <div class="photo-wrap">
+                  <div v-for="(ph,pi) in row.photos" :key="pi" style="position:relative; display:inline-block; margin-bottom:2px;">
+                    <img :src="ph" class="photo-thumb"/>
+                    <span class="photo-del no-print" @click="row.photos.splice(pi,1)" style="position:absolute; top:1px; right:1px; background:rgba(255,255,255,.85); border-radius:50%; width:14px; height:14px; text-align:center; line-height:14px; font-size:10px;">✕</span>
+                  </div>
+                  <label class="photo-btn no-print">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    Add Photo
+                    <input type="file" accept="image/*" capture="environment" style="display:none;" multiple @change="addPhoto(row,$event)"/>
+                  </label>
+                </div>
+              </td>
+              <td><input v-model="row.productName" class="fi" placeholder="Product name"/></td>
+              <td><textarea v-model="row.description" class="fi" rows="2" placeholder="Material, color, finish, wood type, style..."></textarea></td>
+              <td><input v-model.number="row.panjang" @input="calcM3(row)" type="number" class="fi fi-sm" placeholder="0" min="0"/></td>
+              <td><input v-model.number="row.lebar" @input="calcM3(row)" type="number" class="fi fi-sm" placeholder="0" min="0"/></td>
+              <td><input v-model.number="row.tinggi" @input="calcM3(row)" type="number" class="fi fi-sm" placeholder="0" min="0"/></td>
+              <td style="text-align:center; font-weight:700; color:#5C3A1E; font-size:10px; background:#f0f4ff;">{{ fmtM3(row.m3) }}</td>
+              <td><input v-model.number="row.qty" type="number" class="fi fi-sm" min="1" placeholder="1"/></td>
+              <td><textarea v-model="row.keterangan" class="fi" rows="2" placeholder="Additional notes, preferences..."></textarea></td>
+              <td class="no-print" style="text-align:center; vertical-align:middle;">
+                <button @click="form.rows.splice(i,1)" style="color:#ef4444; font-size:18px; background:none; border:none; cursor:pointer; line-height:1;" title="Remove row">×</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <button @click="form.rows.push(newRow())" class="no-print" style="margin-top:10px; padding:7px 16px; background:#5C3A1E; color:#fff; font-size:11px; font-weight:600; border:none; border-radius:4px; cursor:pointer;">+ Add Item</button>
+    </div>
+
+    <!-- ADDITIONAL NOTES -->
+    <div style="margin-bottom:20px;">
+      <div class="sec-head">📝 Additional Notes & Special Requirements</div>
+      <div class="sec-body">
+        <textarea v-model="form.catatan" class="fi" rows="3" placeholder="Any special requirements, preferences, budget range, delivery instructions, or other important details..."></textarea>
+      </div>
+    </div>
+
+    <!-- HOW DID YOU HEAR -->
+    <div style="margin-bottom:20px;">
+      <div class="sec-head">ℹ️ How Did You Hear About Us?</div>
+      <div class="sec-body" style="display:flex; gap:16px; flex-wrap:wrap; align-items:center;">
+        <label v-for="src in sources" :key="src" style="display:flex; align-items:center; gap:6px; font-size:11px; cursor:pointer;">
+          <input type="checkbox" v-model="form.sources" :value="src" style="accent-color:#5C3A1E;"/> {{ src }}
+        </label>
+        <div style="display:flex; align-items:center; gap:6px; font-size:11px;">
+          <span style="color:#64748b;">Other:</span>
+          <input v-model="form.sourceOther" class="fi" style="width:140px;" placeholder="Please specify"/>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTICE -->
+    <div style="background:#fefce8; border:1px solid #fde047; border-radius:6px; padding:12px 16px; font-size:10px; color:#713f12; margin-bottom:18px; line-height:1.7;">
+      <strong>📌 Please Note:</strong> This form is a <strong>request for quotation only</strong> and does not constitute a binding order or contract.
+      Our team will review your requirements and contact you within <strong>2–3 business days</strong> with a formal price quotation.
+      All prices are subject to confirmation and may vary based on final specifications, materials, and delivery terms.
+    </div>
+
+    <!-- FOOTER INFO -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; border-top:1px solid #e2e8f0; padding-top:16px;">
+      <div>
+        <div style="font-size:10px; font-weight:700; color:#5C3A1E; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:6px;">Noyan Furniture</div>
+        <div style="font-size:10px; color:#94a3b8; line-height:1.8;">
+          <div>📧 [email address]</div>
+          <div>📞 [phone number]</div>
+          <div>🌐 [website]</div>
+          <div>📍 [address]</div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-size:9px; color:#cbd5e1; margin-top:auto;">Form No: {{ form.nomorForm || '—' }}</div>
+        <div style="font-size:9px; color:#cbd5e1;">Date: {{ form.tanggal || '—' }}</div>
+        <div style="font-size:9px; color:#e2e8f0; margin-top:10px;">Customer Request Form — Noyan Furniture</div>
+        <div class="gold-line" style="width:80px; margin-left:auto; margin-top:6px;"></div>
+      </div>
+    </div>
+
+  </div>
+  </div>
+
+  <!-- ACTION BAR -->
+  <div class="action-bar no-print">
+    <div style="font-size:11px; color:#64748b;">
+      Customer Request Form &nbsp;|&nbsp;
+      <span style="color:#5C3A1E; font-weight:600;">{{ form.rows.length }} item(s)</span>
+    </div>
+    <div style="display:flex; gap:8px;">
+      <button @click="resetForm()" style="padding:7px 14px; border:1px solid #cbd5e1; color:#64748b; font-size:11px; border-radius:4px; background:#fff; cursor:pointer;">↺ Reset</button>
+      <button @click="window.print()" style="padding:7px 20px; background:#5C3A1E; color:#fff; font-size:11px; font-weight:600; border:none; border-radius:4px; cursor:pointer;">🖨️ Print / Save PDF</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const { createApp, ref } = Vue;
+
+function uid() { return Math.random().toString(36).slice(2,10); }
+
+function newRow() {
+  return {
+    id: uid(),
+    photos: [],
+    productName: '',
+    description: '',
+    panjang: null, lebar: null, tinggi: null,
+    m3: 0,
+    qty: 1,
+    keterangan: '',
+  };
+}
+
+createApp({
+  setup() {
+    const companyLogo = ref(null);
+    function uploadLogo(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => { companyLogo.value = ev.target.result; };
+      reader.readAsDataURL(file);
+    }
+
+    const sources = ['Instagram', 'Facebook', 'Google', 'Word of Mouth', 'Exhibition / Event', 'Interior Designer'];
+
+    const form = ref({
+      nomorForm: '',
+      tanggal: new Date().toISOString().slice(0,10),
+      namaPelanggan: '',
+      telepon: '',
+      email: '',
+      alamat: '',
+      proyek: '',
+      targetSelesai: '',
+      rows: [newRow()],
+      catatan: '',
+      sources: [],
+      sourceOther: '',
+    });
+
+    function calcM3(row) {
+      const p = row.panjang || 0, l = row.lebar || 0, t = row.tinggi || 0;
+      row.m3 = (p && l && t) ? parseFloat(((p * l * t) / 1000000).toFixed(6)) : 0;
+    }
+
+    function fmtM3(val) {
+      if (!val) return '—';
+      return val.toFixed(4) + ' m³';
+    }
+
+    function addPhoto(row, e) {
+      const files = Array.from(e.target.files);
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = ev => { row.photos.push(ev.target.result); };
+        reader.readAsDataURL(file);
+      });
+      e.target.value = '';
+    }
+
+    function resetForm() {
+      if (!confirm('Reset all form data? This cannot be undone.')) return;
+      form.value.rows = [newRow()];
+      form.value.namaPelanggan = '';
+      form.value.telepon = '';
+      form.value.email = '';
+      form.value.alamat = '';
+      form.value.proyek = '';
+      form.value.targetSelesai = '';
+      form.value.catatan = '';
+      form.value.sources = [];
+      form.value.sourceOther = '';
+    }
+
+    return {
+      companyLogo, uploadLogo,
+      sources, form,
+      calcM3, fmtM3,
+      addPhoto, newRow, resetForm,
+      window,
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

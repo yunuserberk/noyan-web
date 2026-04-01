@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noyan Furniture – Sistem Dokumen – Noyan Furniture</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+  * { box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Helvetica Neue', 'Inter', Arial, sans-serif; background: #F7F3EE; margin: 0; }
+
+  /* ─── TABLE CORE ─────────────────────────────────────────── */
+  .doc-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .doc-table th {
+    background: #5C3A1E; color: #fff; font-weight: 700;
+    font-size: 10px; text-transform: uppercase; letter-spacing: 0.4px;
+    padding: 8px 6px; white-space: nowrap; border: 1px solid #3D2410;
+    vertical-align: middle; text-align: center;
+  }
+  .doc-table td {
+    padding: 5px 6px; border: 1px solid #d1d5db;
+    vertical-align: top; font-size: 11px; color: #1e293b;
+  }
+  .doc-table tbody tr:nth-child(even) td { background: #f8fafc; }
+  .doc-table tbody tr:hover td { background: #eff6ff; }
+  .total-row td { background: #5C3A1E !important; color: #fff !important; font-weight: 700; border-color: #3D2410 !important; }
+  .subtotal-row td { background: #1e3a6e !important; color: #fff !important; font-weight: 600; }
+  .grand-row td { background: #B5803A !important; color: #fff !important; font-weight: 800; font-size: 12px; }
+
+  /* ─── INPUTS ─────────────────────────────────────────────── */
+  .fi { width:100%; border:1px solid #e2e8f0; border-radius:3px; padding:3px 5px; font-size:11px; font-family:'Inter',sans-serif; outline:none; background:#fff; color:#1e293b; }
+  .fi:focus { border-color:#5C3A1E; box-shadow:0 0 0 2px rgba(92,58,30,0.12); }
+  .fi-sm { width:70px; text-align:center; }
+  textarea.fi { resize:vertical; min-height:36px; }
+
+  /* ─── SECTION HEADERS ────────────────────────────────────── */
+  .sec-head { background:#5C3A1E; color:#fff; font-weight:700; font-size:10px; text-transform:uppercase; letter-spacing:0.6px; padding:7px 12px; display:flex; align-items:center; gap:6px; }
+  .sec-body { border:1px solid #d1d5db; border-top:none; padding:12px; }
+
+  /* ─── SIGNATURE BOX ──────────────────────────────────────── */
+  .sig-box { border:1px solid #94a3b8; border-radius:4px; padding:14px 12px; min-height:130px; display:flex; flex-direction:column; align-items:center; }
+  .sig-line { border-top:1px solid #64748b; width:100%; margin-top:auto; padding-top:6px; text-align:center; font-size:10px; color:#64748b; }
+
+  /* ─── LOGO PLACEHOLDER ───────────────────────────────────── */
+  .logo-ph { width:130px; height:65px; border:2px dashed #94a3b8; border-radius:4px; display:flex; flex-direction:column; align-items:center; justify-content:center; color:#94a3b8; font-size:9px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; cursor:pointer; }
+  .logo-ph:hover { border-color:#5C3A1E; color:#5C3A1E; }
+  .logo-img { width:130px; height:65px; object-fit:contain; border-radius:4px; }
+
+  /* ─── PHOTO CELL ─────────────────────────────────────────── */
+  .photo-wrap { display:flex; flex-direction:column; align-items:center; gap:3px; min-height:70px; min-width:95px; }
+  .photo-thumb { width:88px; height:66px; object-fit:cover; border-radius:3px; border:1px solid #e2e8f0; display:block; }
+  .photo-btn { display:flex; align-items:center; gap:3px; font-size:9px; font-weight:600; color:#5C3A1E; cursor:pointer; padding:3px 7px; border:1px solid #5C3A1E; border-radius:3px; background:#fff; white-space:nowrap; }
+  .photo-btn:hover { background:#5C3A1E; color:#fff; }
+  .photo-del { font-size:9px; color:#ef4444; cursor:pointer; margin-left:2px; }
+
+  /* ─── FORM HEADER META ───────────────────────────────────── */
+  .meta-row { display:flex; align-items:center; gap:8px; margin-bottom:5px; font-size:11px; }
+  .meta-label { color:#64748b; font-weight:600; min-width:90px; }
+
+  /* ─── GOLD ACCENT LINE ───────────────────────────────────── */
+  .gold-line { height:3px; background:linear-gradient(90deg,#B5803A,#D4A855,#B5803A); }
+
+  /* ─── TABS ───────────────────────────────────────────────── */
+  .tab-btn { padding:9px 18px; font-size:12px; font-weight:600; border-radius:6px 6px 0 0; cursor:pointer; border:none; transition:all .2s; }
+  .tab-btn.active { background:#fff; color:#5C3A1E; border-bottom:3px solid #B5803A; }
+  .tab-btn:not(.active) { background:#e2e8f0; color:#64748b; }
+
+  /* ─── ACTION BAR ─────────────────────────────────────────── */
+  .action-bar { position:fixed; bottom:0; left:0; right:0; background:#fff; border-top:1px solid #e2e8f0; padding:10px 20px; display:flex; justify-content:space-between; align-items:center; z-index:100; box-shadow:0 -2px 10px rgba(0,0,0,.08); }
+
+  /* ─── TABLE SCROLL ───────────────────────────────────────── */
+  .tbl-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+
+  /* ─── WATERMARK / STAMP ──────────────────────────────────── */
+  .form-stamp { font-size:9px; color:#94a3b8; text-align:right; margin-top:4px; }
+
+  /* ═══════════════════════════════════════════════════════════
+     PRINT STYLES
+  ═══════════════════════════════════════════════════════════ */
+  @media print {
+    .no-print { display:none !important; }
+    body { background:#fff !important; }
+    .print-wrap { box-shadow:none !important; margin:0 !important; }
+    .doc-table td, .doc-table th { font-size:10px; padding:4px 5px; }
+    .fi { border:none; padding:0; background:transparent; }
+    textarea.fi { border:none; resize:none; }
+    .photo-thumb { width:75px; height:56px; }
+    .action-bar { display:none !important; }
+    .app-nav { display:none !important; }
+    @page { size:A3 landscape; margin:12mm 10mm; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- ══════════════════════ APP NAV ══════════════════════ -->
+  <div class="app-nav no-print" style="background:#5C3A1E; padding:10px 20px; display:flex; align-items:center; gap:16px;">
+    <div style="color:#B5803A; font-weight:800; font-size:15px; letter-spacing:1px;">NOYAN FURNITURE</div>
+    <div style="color:#94a3b8; font-size:12px;">│</div>
+    <div style="color:#cbd5e1; font-size:12px;">Sistem Dokumen – Noyan Furniture</div>
+  </div>
+
+  <!-- ══════════════════════ TABS ═════════════════════════ -->
+  <div class="no-print" style="display:flex; gap:4px; padding:16px 20px 0; background:#F7F3EE;">
+    <button v-for="t in formTypes" :key="t.id"
+      :class="['tab-btn', activeForm===t.id?'active':'']"
+      @click="activeForm=t.id">
+      {{ t.icon }} {{ t.label }}
+    </button>
+  </div>
+
+  <!-- ══════════════════════ FORM WRAPPER ═════════════════ -->
+  <div style="padding:0 20px 80px; background:#F7F3EE;">
+  <div class="print-wrap" style="background:#fff; box-shadow:0 1px 12px rgba(0,0,0,.1);">
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║              SPK — SURAT PERINTAH KERJA              ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <template v-if="activeForm==='spk'">
+    <div style="padding:24px 28px;">
+
+      <!-- HEADER -->
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+        <!-- Logo -->
+        <div>
+          <label class="no-print" style="cursor:pointer;">
+            <div class="logo-ph" v-if="!companyLogo">
+              <div style="font-size:22px; margin-bottom:2px;">🏢</div>
+              <div>LOGO</div>
+              <div>PERUSAHAAN</div>
+            </div>
+            <img v-else :src="companyLogo" class="logo-img"/>
+            <input type="file" accept="image/*" class="hidden" style="display:none" @change="uploadLogo($event)"/>
+          </label>
+          <img v-if="companyLogo" :src="companyLogo" class="logo-img" style="display:none" />
+          <!-- Print logo -->
+          <div class="logo-ph" v-if="!companyLogo" style="display:none;" id="print-logo-ph">LOGO PERUSAHAAN</div>
+        </div>
+
+        <!-- Title Center -->
+        <div style="text-align:center; flex:1; margin:0 24px;">
+          <div style="font-size:26px; font-weight:900; color:#5C3A1E; letter-spacing:6px;">SPK</div>
+          <div style="font-size:11px; font-weight:700; color:#5C3A1E; letter-spacing:2px; margin-top:2px;">SURAT PERINTAH KERJA</div>
+          <div style="font-size:9px; color:#94a3b8; letter-spacing:1px; margin-top:1px;">WORK ORDER</div>
+          <div class="gold-line" style="margin-top:6px;"></div>
+        </div>
+
+        <!-- Meta Right -->
+        <div style="text-align:right; font-size:11px; min-width:210px;">
+          <div class="meta-row" style="justify-content:flex-end;">
+            <span class="meta-label" style="min-width:auto;">No. SPK</span>
+            <input v-model="spk.nomorSPK" class="fi" style="width:110px; text-align:right;" placeholder="SPK-001"/>
+          </div>
+          <div class="meta-row" style="justify-content:flex-end; margin-top:4px;">
+            <span class="meta-label" style="min-width:auto;">Tanggal</span>
+            <input type="date" v-model="spk.tanggal" class="fi" style="width:130px;"/>
+          </div>
+          <div class="meta-row" style="justify-content:flex-end; margin-top:4px;">
+            <span class="meta-label" style="min-width:auto;">Tgl. Kirim</span>
+            <input type="date" v-model="spk.tanggalKirim" class="fi" style="width:130px;"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- RECIPIENT META -->
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; padding:10px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:4px;">
+        <div>
+          <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px;">Kepada / To</div>
+          <input v-model="spk.kepada" class="fi" placeholder="Nama Supplier / Subkontraktor"/>
+        </div>
+        <div>
+          <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px;">Proyek / Project</div>
+          <input v-model="spk.proyek" class="fi" placeholder="Nama Proyek"/>
+        </div>
+        <div>
+          <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px;">Deskripsi Pekerjaan</div>
+          <input v-model="spk.deskripsiPekerjaan" class="fi" placeholder="Ringkasan pekerjaan"/>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="tbl-wrap" style="margin-bottom:14px;">
+        <table class="doc-table" style="min-width:1050px;">
+          <thead>
+            <tr>
+              <th style="width:32px;">NO</th>
+              <th style="width:105px;">FOTO</th>
+              <th style="width:145px;">NAMA PRODUK</th>
+              <th style="width:160px;">DESKRIPSI / DETAIL</th>
+              <th style="width:62px;">P (cm)</th>
+              <th style="width:62px;">L (cm)</th>
+              <th style="width:62px;">T (cm)</th>
+              <th style="width:72px;">M³</th>
+              <th style="width:48px;">QTY</th>
+              <th style="width:88px;">HARGA SATUAN</th>
+              <th style="width:88px;">TOTAL HARGA</th>
+              <th style="width:110px;">KETERANGAN</th>
+              <th class="no-print" style="width:36px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row,i) in spk.rows" :key="row.id">
+              <td style="text-align:center; font-weight:700; color:#64748b;">{{ i+1 }}</td>
+              <td>
+                <div class="photo-wrap">
+                  <div v-for="(ph,pi) in row.photos" :key="pi" style="position:relative; display:inline-block;">
+                    <img :src="ph" class="photo-thumb"/>
+                    <span class="photo-del no-print" @click="row.photos.splice(pi,1)">✕</span>
+                  </div>
+                  <label class="photo-btn no-print">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    Foto
+                    <input type="file" accept="image/*" capture="environment" style="display:none;" @change="addPhoto(row,$event)"/>
+                  </label>
+                </div>
+              </td>
+              <td><input v-model="row.productName" class="fi" placeholder="Nama produk"/></td>
+              <td><textarea v-model="row.description" class="fi" rows="2" placeholder="Detail / spesifikasi"></textarea></td>
+              <td><input v-model.number="row.panjang" @input="calcM3(row)" type="number" class="fi fi-sm" placeholder="0" min="0"/></td>
+              <td><input v-model.number="row.lebar" @input="calcM3(row)" type="number" class="fi fi-sm" placeholder="0" min="0"/></td>
+              <td><input v-model.number="row.tinggi" @input="calcM3(row)" type="number" class="fi fi-sm" placeholder="0" min="0"/></td>
+              <td style="text-align:center; font-weight:700; color:#5C3A1E; font-size:10px;">{{ fmtM3(row.m3) }}</td>
+              <td><input v-model.number="row.qty" type="number" class="fi fi-sm" min="1" placeholder="1" @input="calcTotal(row)"/></td>
+              <td><input v-model.number="row.hargaSatuan" type="number" class="fi" min="0" placeholder="0" @input="calcTotal(row)" style="text-align:right;"/></td>
+              <td style="text-align:right; font-weight:700; padding-right:8px;">{{ fmtRp(row.totalHarga) }}</td>
+              <td><input v-model="row.keterangan" class="fi" placeholder="Catatan"/></td>
+              <td class="no-print" style="text-align:center;">
+                <button @click="spk.rows.splice(i,1)" style="color:#ef4444; font-size:16px; background:none; border:none; cursor:pointer; line-height:1;">×</button>
+              </td>
+            </tr>
+            <tr class="total-row">
+              <td colspan="10" style="text-align:right; font-size:11px; padding-right:10px; letter-spacing:0.5px;">TOTAL KESELURUHAN / GRAND TOTAL :</td>
+              <td style="text-align:right; padding-right:8px; font-size:12px;">{{ fmtRp(spkTotal) }}</td>
+              <td colspan="2"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <button @click="spk.rows.push(newRow())" class="no-print" style="margin-bottom:18px; padding:7px 14px; background:#5C3A1E; color:#fff; font-size:11px; font-weight:600; border:none; border-radius:4px; cursor:pointer;">+ Tambah Baris / Add Row</button>
+
+      <!-- QUALITY SPECS -->
+      <div style="margin-bottom:14px;">
+        <div class="sec-head">📋 Spesifikasi Kualitas / Quality Specification</div>
+        <div class="sec-body">
+          <div v-for="(spec,i) in spk.qualitySpecs" :key="i" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <span style="color:#5C3A1E; font-weight:700; font-size:12px;">—</span>
+            <input v-model="spk.qualitySpecs[i]" class="fi" style="flex:1;"/>
+            <button @click="spk.qualitySpecs.splice(i,1)" class="no-print" style="color:#ef4444; background:none; border:none; cursor:pointer; font-size:14px;">×</button>
+          </div>
+          <button @click="spk.qualitySpecs.push('')" class="no-print" style="margin-top:4px; font-size:10px; color:#5C3A1E; background:none; border:none; cursor:pointer; font-weight:600;">+ Tambah Spesifikasi</button>
+        </div>
+      </div>
+
+      <!-- TERMS -->
+      <div style="margin-bottom:22px;">
+        <div class="sec-head">⚖️ Syarat & Ketentuan Mengikat / Binding Terms & Conditions</div>
+        <div class="sec-body">
+          <textarea v-model="spk.bindingClause" class="fi" rows="3" style="font-size:11px; line-height:1.6;"></textarea>
+        </div>
+      </div>
+
+      <!-- SIGNATURES -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:32px; margin-top:10px;">
+        <div style="text-align:center;">
+          <div style="font-size:10px; font-weight:700; color:#5C3A1E; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px; background:#f0f4ff; padding:5px; border-radius:3px;">Supplier</div>
+          <div class="sig-box">
+            <div style="font-size:9px; color:#94a3b8; margin-bottom:4px;">Materai / Stamp</div>
+            <div style="flex:1;"></div>
+            <div style="width:100%;">
+              <div class="sig-line">Nama & Jabatan</div>
+              <div style="font-size:9px; color:#94a3b8; margin-top:6px;">Tanggal : __________________</div>
+            </div>
+          </div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:10px; font-weight:700; color:#5C3A1E; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px; background:#f0f4ff; padding:5px; border-radius:3px;">Buyer / Pembeli</div>
+          <div class="sig-box">
+            <div style="font-weight:800; font-size:12px; color:#5C3A1E; letter-spacing:0.5px;">NOYAN FURNITURE</div>
+            <div style="font-size:9px; color:#94a3b8; margin-top:2px; margin-bottom:4px;">Materai / Stamp</div>
+            <div style="flex:1;"></div>
+            <div style="width:100%;">
+              <div class="sig-line">Nama & Jabatan</div>
+              <div style="font-size:9px; color:#94a3b8; margin-top:6px;">Tanggal : __________________</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="form-stamp">Dokumen ini dicetak melalui Sistem Dokumen – Noyan Furniture Noyan Furniture</div>
+    </div>
+  </template>
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║        FORMULIR PERMINTAAN PELANGGAN (TALEP)         ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <template v-if="activeForm==='talep'">
+    <div style="padding:24px 28px;">
+
+      <!-- HEADER -->
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+        <div>
+          <label class="no-print" style="cursor:pointer;">
+            <div class="logo-ph" v-if="!companyLogo">
+              <div style="font-size:22px; margin-bottom:2px;">🏢</div><div>LOGO</div><div>PERUSAHAAN</div>
+            </div>
+            <img v-else :src="companyLogo" class="logo-img"/>
+            <input type="file" accept="image/*" style="display:none;" @change="uploadLogo($event)"/>
+          </label>
+        </div>
+
+        <div style="text-align:center; flex:1; margin:0 24px;">
+          <div style="font-size:20px; font-weight:900; color:#5C3A1E; letter-spacing:3px;">FORMULIR PERMINTAAN</div>
+          <div style="font-size:11px; font-weight:700; color:#5C3A1E; letter-spacing:1.5px; margin-top:2px;">CUSTOMER REQUEST FORM</div>
+          <div style="font-size:9px; color:#94a3b8; margin-top:1px;">Diisi oleh pelanggan / Filled by customer</div>
+          <div class="gold-line" style="margin-top:6px;"></div>
+        </div>
+
+        <div style="text-align:right; font-size:11px; min-width:210px;">
+          <div class="meta-row" style="justify-content:flex-end;">
+            <span class="meta-label" style="min-width:auto;">No. Form</span>
+            <input v-model="talep.nomorForm" class="fi" style="width:110px; text-align:right;" placeholder="REQ-001"/>
+          </div>
+          <div class="meta-row" style="justify-content:flex-end; margin-top:4px;">
+            <span class="meta-label" style="min-width:auto;">Tanggal</span>
+            <input type="date" v-model="talep.tanggal" class="fi" style="width:130px;"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- CUSTOMER INFO -->
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; padding:10px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:4px;">
+        <div>
+          <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px;">Nama Pelanggan / Customer Name</div>
+          <input v-model="talep.namaPelanggan" class="fi" placeholder="Nama lengkap / perusahaan"/>
+        </div>
+        <div>
+          <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px;">Telepon / Whatsapp</div>
+          <input v-model="talep.telepon" class="fi" placeholder="+62 ..."/>
+        </div>
+        <div>
+          <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px;">Email</div>
+          <input v-model="talep.email" class="fi" placeholder="email@domain.com"/>
+        </div>
+        <div>
+          <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px;">Alamat Pengiriman / Delivery Address</div>
+          <input v-model="talep.alamat" class="fi" placeholder="Alamat lengkap tujuan"/>
+        </div>
+        <div>
+          <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px;">Proyek / Project</div>
+          <input v-model="talep.proyek" class="fi" placeholder="Nama proyek (opsional)"/>
+        </div>
+        <div>
+          <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px;">Target Selesai / Expected Completion</div>
+          <input type="date" v-model="talep.targetSelesai" class="fi"/>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="tbl-wrap" style="margin-bottom:14px;">
+        <table class="doc-table" style="min-width:820px;">
+          <thead>
+            <tr>
+              <th style="width:32px;">NO</th>
+              <th style="width:105px;">FOTO / REFERENSI</th>
+              <th style="width:160px;">NAMA PRODUK</th>
+              <th style="width:180px;">DESKRIPSI / DETAIL<br/><span style="font-weight:400; font-size:9px; opacity:.8;">(bahan, warna, finishing, dll)</span></th>
+              <th style="width:65px;">P (cm)<br/><span style="font-weight:400; font-size:9px;">Panjang</span></th>
+              <th style="width:65px;">L (cm)<br/><span style="font-weight:400; font-size:9px;">Lebar</span></th>
+              <th style="width:65px;">T (cm)<br/><span style="font-weight:400; font-size:9px;">Tinggi</span></th>
+              <th style="width:72px;">M³<br/><span style="font-weight:400; font-size:9px;">Volume</span></th>
+              <th style="width:50px;">QTY</th>
+              <th style="width:120px;">KETERANGAN</th>
+              <th class="no-print" style="width:36px;"></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row,i) in talep.rows" :key="row.id">
+              <td style="text-align:center; font-weight:700; color:#64748b;">{{ i+1 }}</td>
+              <td>
+                <div class="photo-wrap">
+                  <div v-for="(ph,pi) in row.photos" :key="pi" style="position:relative;">
+                    <img :src="ph" class="photo-thumb"/>
+                    <span class="photo-del no-print" @click="row.photos.splice(pi,1)">✕</span>
+                  </div>
+                  <label class="photo-btn no-print">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    Foto
+                    <input type="file" accept="image/*" capture="environment" style="display:none;" @change="addPhoto(row,$event)"/>
+                  </label>
+                </div>
+              </td>
+              <td><input v-model="row.productName" class="fi" placeholder="Nama produk"/></td>
+              <td><textarea v-model="row.description" class="fi" rows="2" placeholder="Detail / spesifikasi / material / warna"></textarea></td>
+              <td><input v-model.number="row.panjang" @input="calcM3(row)" type="number" class="fi fi-sm" placeholder="0"/></td>
+              <td><input v-model.number="row.lebar" @input="calcM3(row)" type="number" class="fi fi-sm" placeholder="0"/></td>
+              <td><input v-model.number="row.tinggi" @input="calcM3(row)" type="number" class="fi fi-sm" placeholder="0"/></td>
+              <td style="text-align:center; font-weight:700; color:#5C3A1E; font-size:10px;">{{ fmtM3(row.m3) }}</td>
+              <td><input v-model.number="row.qty" type="number" class="fi fi-sm" min="1" placeholder="1"/></td>
+              <td><textarea v-model="row.keterangan" class="fi" rows="2" placeholder="Catatan tambahan"></textarea></td>
+              <td class="no-print" style="text-align:center;">
+                <button @click="talep.rows.splice(i,1)" style="color:#ef4444; font-size:16px; background:none; border:none; cursor:pointer;">×</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div style="display:flex; gap:10px; margin-bottom:18px;" class="no-print">
+        <button @click="talep.rows.push(newRow())" style="padding:7px 14px; background:#5C3A1E; color:#fff; font-size:11px; font-weight:600; border:none; border-radius:4px; cursor:pointer;">+ Tambah Baris</button>
+        <button @click="copyTalepToTeklif()" style="padding:7px 14px; background:#B5803A; color:#fff; font-size:11px; font-weight:600; border:none; border-radius:4px; cursor:pointer;">→ Salin ke Teklif / Copy to Quote</button>
+      </div>
+
+      <!-- NOTES -->
+      <div style="margin-bottom:16px;">
+        <div class="sec-head">📝 Catatan Pelanggan / Customer Notes</div>
+        <div class="sec-body">
+          <textarea v-model="talep.catatan" class="fi" rows="3" placeholder="Catatan khusus, preferensi, atau permintaan tambahan dari pelanggan..."></textarea>
+        </div>
+      </div>
+
+      <!-- DISCLAIMER -->
+      <div style="background:#fefce8; border:1px solid #fde047; border-radius:4px; padding:10px 12px; font-size:10px; color:#713f12; margin-bottom:10px;">
+        <strong>Catatan:</strong> Formulir ini adalah permintaan penawaran dan bukan merupakan konfirmasi pesanan. Harga akan diberikan dalam Formulir Penawaran terpisah setelah ditinjau oleh tim kami.
+      </div>
+      <div class="form-stamp">Dokumen ini dicetak melalui Sistem Dokumen – Noyan Furniture Noyan Furniture</div>
+    </div>
+  </template>
+
+  <!-- ╔══════════════════════════════════════════════════════╗
+       ║          FORMULIR PENAWARAN HARGA (TEKLIF)           ║
+       ╚══════════════════════════════════════════════════════╝ -->
+  <template v-if="activeForm==='teklif'">
+    <div style="padding:24px 28px;">
+
+      <!-- HEADER -->
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+        <div>
+          <label class="no-print" style="cursor:pointer;">
+            <div class="logo-ph" v-if="!companyLogo">
+              <div style="font-size:22px; margin-bottom:2px;">🏢</div><div>LOGO</div><div>PERUSAHAAN</div>
+            </div>
+            <img v-else :src="companyLogo" class="logo-img"/>
+            <input type="file" accept="image/*" style="display:none;" @change="uploadLogo($event)"/>
+          </label>
+        </div>
+
+        <div style="text-align:center; flex:1; margin:0 24px;">
+          <div style="font-size:20px; font-weight:900; color:#5C3A1E; letter-spacing:3px;">PENAWARAN HARGA</div>
+          <div style="font-size:11px; font-weight:700; color:#5C3A1E; letter-spacing:1.5px; margin-top:2px;">QUOTATION / PRICE OFFER</div>
+          <div style="font-size:9px; color:#94a3b8; margin-top:1px;">Surat Penawaran Resmi / Official Quotation</div>
+          <div class="gold-line" style="margin-top:6px;"></div>
+        </div>
+
+        <div style="text-align:right; font-size:11px; min-width:210px;">
+          <div class="meta-row" style="justify-content:flex-end;">
+            <span class="meta-label" style="min-width:auto;">No. Penawaran</span>
+            <input v-model="teklif.nomorTeklif" class="fi" style="width:110px; text-align:right;" placeholder="QUO-001"/>
+          </div>
+          <div class="meta-row" style="justify-content:flex-end; margin-top:4px;">
+            <span class="meta-label" style="min-width:auto;">Tanggal</span>
+            <input type="date" v-model="teklif.tanggal" class="fi" style="width:130px;"/>
+          </div>
+          <div class="meta-row" style="justify-content:flex-end; margin-top:4px;">
+            <span class="meta-label" style="min-width:auto;">Berlaku Hingga</span>
+            <input type="date" v-model="teklif.berlakuHingga" class="fi" style="width:130px;"/>
+          </div>
+          <div class="meta-row" style="justify-content:flex-end; margin-top:4px;">
+            <span class="meta-label" style="min-width:auto;">Ref. Permintaan</span>
+            <input v-model="teklif.refPermintaan" class="fi" style="width:110px; text-align:right;" placeholder="REQ-001"/>
+          </div>
+        </div>
+      </div>
+
+      <!-- CUSTOMER META -->
+      <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; padding:10px 12px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:4px;">
+        <div>
+          <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px;">Kepada / To</div>
+          <input v-model="teklif.kepada" class="fi" placeholder="Nama pelanggan / perusahaan"/>
+        </div>
+        <div>
+          <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px;">Attn. / Kontak Person</div>
+          <input v-model="teklif.attnNama" class="fi" placeholder="Nama kontak"/>
+        </div>
+        <div>
+          <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px;">Proyek / Project</div>
+          <input v-model="teklif.proyek" class="fi" placeholder="Nama proyek"/>
+        </div>
+        <div>
+          <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px;">Syarat Pembayaran / Payment Terms</div>
+          <input v-model="teklif.syaratPembayaran" class="fi" placeholder="Mis. DP 50% sebelum produksi"/>
+        </div>
+        <div>
+          <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px;">Estimasi Selesai / Est. Completion</div>
+          <input type="date" v-model="teklif.estimasiSelesai" class="fi"/>
+        </div>
+        <div>
+          <div style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:3px;">Mata Uang / Currency</div>
+          <select v-model="teklif.currency" class="fi">
+            <option value="IDR">IDR – Rupiah</option>
+            <option value="USD">USD – Dolar Amerika</option>
+            <option value="EUR">EUR – Euro</option>
+            <option value="SGD">SGD – Dolar Singapura</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- TABLE -->
+      <div class="tbl-wrap" style="margin-bottom:14px;">
+        <table class="doc-table" style="min-width:1280px;">
+          <thead>
+            <tr>
+              <th rowspan="2" style="width:30px;">NO</th>
+              <th rowspan="2" style="width:100px;">FOTO</th>
+              <th rowspan="2" style="width:140px;">NAMA PRODUK</th>
+              <th rowspan="2" style="width:140px;">DESKRIPSI / DETAIL</th>
+              <th colspan="4" style="background:#7A4E2D; border-bottom:1px solid #5C3A1E;">UKURAN PRODUK / PRODUCT SIZE</th>
+              <th rowspan="2" style="width:48px;">QTY</th>
+              <th rowspan="2" style="width:100px;">JENIS PACKING</th>
+              <th colspan="4" style="background:#7A4E2D; border-bottom:1px solid #5C3A1E;">UKURAN SETELAH PACKING</th>
+              <th rowspan="2" style="width:85px;">HARGA SATUAN</th>
+              <th rowspan="2" style="width:85px;">TOTAL HARGA</th>
+              <th rowspan="2" style="width:100px;">KETERANGAN</th>
+              <th rowspan="2" class="no-print" style="width:32px;"></th>
+            </tr>
+            <tr>
+              <th style="width:58px; background:#7A4E2D;">P (cm)</th>
+              <th style="width:58px; background:#7A4E2D;">L (cm)</th>
+              <th style="width:58px; background:#7A4E2D;">T (cm)</th>
+              <th style="width:68px; background:#7A4E2D;">M³</th>
+              <th style="width:58px; background:#7A4E2D;">P (cm)</th>
+              <th style="width:58px; background:#7A4E2D;">L (cm)</th>
+              <th style="width:58px; background:#7A4E2D;">T (cm)</th>
+              <th style="width:68px; background:#7A4E2D;">M³</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(row,i) in teklif.rows" :key="row.id">
+              <td style="text-align:center; font-weight:700; color:#64748b;">{{ i+1 }}</td>
+              <td>
+                <div class="photo-wrap">
+                  <div v-for="(ph,pi) in row.photos" :key="pi" style="position:relative;">
+                    <img :src="ph" class="photo-thumb"/>
+                    <span class="photo-del no-print" @click="row.photos.splice(pi,1)">✕</span>
+                  </div>
+                  <label class="photo-btn no-print">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                    Foto
+                    <input type="file" accept="image/*" capture="environment" style="display:none;" @change="addPhoto(row,$event)"/>
+                  </label>
+                </div>
+              </td>
+              <td><input v-model="row.productName" class="fi" placeholder="Nama produk"/></td>
+              <td><textarea v-model="row.description" class="fi" rows="2" placeholder="Detail / finishing / material"></textarea></td>
+              <td><input v-model.number="row.panjang" @input="calcM3(row)" type="number" class="fi fi-sm" placeholder="0"/></td>
+              <td><input v-model.number="row.lebar" @input="calcM3(row)" type="number" class="fi fi-sm" placeholder="0"/></td>
+              <td><input v-model.number="row.tinggi" @input="calcM3(row)" type="number" class="fi fi-sm" placeholder="0"/></td>
+              <td style="text-align:center; font-weight:700; color:#5C3A1E; font-size:10px; background:#f0f4ff;">{{ fmtM3(row.m3) }}</td>
+              <td><input v-model.number="row.qty" type="number" class="fi fi-sm" min="1" placeholder="1" @input="calcTotal(row)"/></td>
+              <td>
+                <select v-model="row.jenisPacking" class="fi" style="font-size:10px;">
+                  <option value="">— Pilih —</option>
+                  <option>Karton Biasa</option>
+                  <option>Karton Double Wall</option>
+                  <option>Kayu + Karton</option>
+                  <option>Peti Kayu</option>
+                  <option>Bubble Wrap</option>
+                  <option>Plastik Shrink</option>
+                  <option>Tanpa Packing</option>
+                </select>
+              </td>
+              <td><input v-model.number="row.panjangPacking" @input="calcM3Packing(row)" type="number" class="fi fi-sm" placeholder="0"/></td>
+              <td><input v-model.number="row.lebarPacking" @input="calcM3Packing(row)" type="number" class="fi fi-sm" placeholder="0"/></td>
+              <td><input v-model.number="row.tinggiPacking" @input="calcM3Packing(row)" type="number" class="fi fi-sm" placeholder="0"/></td>
+              <td style="text-align:center; font-weight:700; color:#B5803A; font-size:10px; background:#FBF5E8;">{{ fmtM3(row.m3Packing) }}</td>
+              <td><input v-model.number="row.hargaSatuan" type="number" class="fi" min="0" placeholder="0" @input="calcTotal(row)" style="text-align:right;"/></td>
+              <td style="text-align:right; font-weight:700; padding-right:8px;">{{ fmtCurrency(row.totalHarga, teklif.currency) }}</td>
+              <td><textarea v-model="row.keterangan" class="fi" rows="2" placeholder="Catatan"></textarea></td>
+              <td class="no-print" style="text-align:center;">
+                <button @click="teklif.rows.splice(i,1)" style="color:#ef4444; font-size:16px; background:none; border:none; cursor:pointer;">×</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <button @click="teklif.rows.push(newRow())" class="no-print" style="margin-bottom:18px; padding:7px 14px; background:#5C3A1E; color:#fff; font-size:11px; font-weight:600; border:none; border-radius:4px; cursor:pointer;">+ Tambah Baris</button>
+
+      <!-- TOTALS -->
+      <div style="display:flex; justify-content:flex-end; margin-bottom:16px;">
+        <div style="min-width:380px; border:1px solid #e2e8f0; border-radius:4px; overflow:hidden;">
+          <div style="background:#5C3A1E; color:#fff; padding:7px 14px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">Ringkasan Biaya / Cost Summary</div>
+          <table style="width:100%; font-size:11px; border-collapse:collapse;">
+            <tr>
+              <td style="padding:6px 14px; border-bottom:1px solid #e2e8f0; color:#64748b;">Subtotal</td>
+              <td style="padding:6px 14px; border-bottom:1px solid #e2e8f0; text-align:right; font-weight:600;">{{ fmtCurrency(teklifSubtotal, teklif.currency) }}</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 14px; border-bottom:1px solid #e2e8f0; color:#64748b;">
+                <label style="display:flex; align-items:center; gap:6px; cursor:pointer;">
+                  <input type="checkbox" v-model="teklif.includePPN" class="no-print"/> PPN {{ teklif.ppn }}%
+                </label>
+              </td>
+              <td style="padding:6px 14px; border-bottom:1px solid #e2e8f0; text-align:right; font-weight:600; color:#64748b;">
+                {{ teklif.includePPN ? fmtCurrency(teklifPPN, teklif.currency) : '—' }}
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 14px; background:#B5803A; color:#fff; font-weight:800; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Total Akhir / Grand Total</td>
+              <td style="padding:8px 14px; background:#B5803A; color:#fff; font-weight:800; font-size:13px; text-align:right;">{{ fmtCurrency(teklifGrandTotal, teklif.currency) }}</td>
+            </tr>
+            <tr>
+              <td colspan="2" style="padding:5px 14px; font-size:9px; color:#94a3b8; text-align:right;">
+                Total M³ Produk: <strong>{{ fmtM3Total(teklif.rows, 'm3') }}</strong> &nbsp;|&nbsp; Total M³ Packing: <strong>{{ fmtM3Total(teklif.rows, 'm3Packing') }}</strong>
+              </td>
+            </tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- NOTES / TERMS -->
+      <div style="margin-bottom:16px;">
+        <div class="sec-head">📝 Catatan & Syarat Penawaran / Notes & Quotation Terms</div>
+        <div class="sec-body">
+          <textarea v-model="teklif.catatan" class="fi" rows="3" placeholder="Catatan tambahan, syarat dan ketentuan penawaran, informasi penting lainnya..."></textarea>
+        </div>
+      </div>
+
+      <!-- SIGNATURES -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:32px; margin-top:10px;">
+        <div style="text-align:center;">
+          <div style="font-size:10px; font-weight:700; color:#5C3A1E; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px; background:#f0f4ff; padding:5px; border-radius:3px;">Pelanggan / Customer</div>
+          <div class="sig-box">
+            <div style="font-size:9px; color:#94a3b8; margin-bottom:4px;">Tanda Tangan & Cap / Signature & Stamp</div>
+            <div style="flex:1;"></div>
+            <div style="width:100%;">
+              <div class="sig-line">Nama & Jabatan / Name & Title</div>
+              <div style="font-size:9px; color:#94a3b8; margin-top:6px;">Tanggal / Date : __________________</div>
+            </div>
+          </div>
+          <div style="font-size:9px; color:#64748b; margin-top:5px; font-style:italic;">Dengan menandatangani dokumen ini, pelanggan menyetujui penawaran yang tertera di atas.</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-size:10px; font-weight:700; color:#5C3A1E; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:8px; background:#f0f4ff; padding:5px; border-radius:3px;">Pihak Penjual / Seller</div>
+          <div class="sig-box">
+            <div style="font-weight:800; font-size:12px; color:#5C3A1E; letter-spacing:0.5px;">NOYAN FURNITURE</div>
+            <div style="font-size:9px; color:#94a3b8; margin-top:2px; margin-bottom:4px;">Tanda Tangan & Cap / Signature & Stamp</div>
+            <div style="flex:1;"></div>
+            <div style="width:100%;">
+              <div class="sig-line">Nama & Jabatan / Name & Title</div>
+              <div style="font-size:9px; color:#94a3b8; margin-top:6px;">Tanggal / Date : __________________</div>
+            </div>
+          </div>
+          <div style="font-size:9px; color:#64748b; margin-top:5px; font-style:italic;">Penawaran ini sah dan mengikat setelah ditandatangani kedua belah pihak.</div>
+        </div>
+      </div>
+      <div class="form-stamp">Dokumen ini dicetak melalui Sistem Dokumen – Noyan Furniture Noyan Furniture</div>
+    </div>
+  </template>
+
+  </div><!-- /print-wrap -->
+  </div><!-- /padding wrapper -->
+
+  <!-- ══════════════════════ ACTION BAR ════════════════════ -->
+  <div class="action-bar no-print">
+    <div style="font-size:11px; color:#64748b;">
+      Form aktif: <strong style="color:#5C3A1E;">{{ activeFormLabel }}</strong>
+      <span v-if="activeForm==='teklif'" style="margin-left:10px; color:#B5803A; font-weight:600;">Grand Total: {{ fmtCurrency(teklifGrandTotal, teklif.currency) }}</span>
+    </div>
+    <div style="display:flex; gap:8px; align-items:center;">
+      <select v-model="activeForm" style="padding:6px 10px; border:1px solid #e2e8f0; border-radius:4px; font-size:11px; color:#5C3A1E; font-weight:600;">
+        <option v-for="t in formTypes" :key="t.id" :value="t.id">{{ t.label }}</option>
+      </select>
+      <button @click="resetActiveForm()" style="padding:7px 14px; border:1px solid #cbd5e1; color:#64748b; font-size:11px; border-radius:4px; background:#fff; cursor:pointer;">↺ Reset</button>
+      <button @click="window.print()" style="padding:7px 18px; background:#5C3A1E; color:#fff; font-size:11px; font-weight:600; border:none; border-radius:4px; cursor:pointer; display:flex; align-items:center; gap:6px;">
+        🖨️ Cetak / Print
+      </button>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<script>
+const { createApp, ref, computed } = Vue;
+
+function uid() { return Math.random().toString(36).slice(2,10); }
+
+function newRow() {
+  return {
+    id: uid(),
+    photos: [],
+    productName: '',
+    description: '',
+    panjang: null, lebar: null, tinggi: null,
+    m3: 0,
+    qty: 1,
+    hargaSatuan: 0,
+    totalHarga: 0,
+    jenisPacking: '',
+    panjangPacking: null, lebarPacking: null, tinggiPacking: null,
+    m3Packing: 0,
+    keterangan: '',
+  };
+}
+
+function deepCopyRows(rows) {
+  return rows.map(r => ({
+    ...r,
+    id: uid(),
+    photos: [...r.photos],
+  }));
+}
+
+createApp({
+  setup() {
+    const activeForm = ref('spk');
+
+    const formTypes = [
+      { id:'spk',    label:'SPK – Surat Perintah Kerja', icon:'📋' },
+      { id:'talep',  label:'Formulir Permintaan Pelanggan', icon:'📝' },
+      { id:'teklif', label:'Formulir Penawaran Harga', icon:'💼' },
+    ];
+
+    const activeFormLabel = computed(() => formTypes.find(f => f.id === activeForm.value)?.label || '');
+
+    // ── Company Logo (shared across all forms)
+    const companyLogo = ref(null);
+    function uploadLogo(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => { companyLogo.value = ev.target.result; };
+      reader.readAsDataURL(file);
+    }
+
+    // ── SPK data
+    const today = new Date().toISOString().slice(0,10);
+    const spk = ref({
+      nomorSPK: '',
+      tanggal: today,
+      tanggalKirim: '',
+      kepada: '',
+      proyek: '',
+      deskripsiPekerjaan: '',
+      rows: [newRow()],
+      qualitySpecs: [
+        'GRADE A / Lepas Putih',
+        'AMPLAS HALUS',
+        'KAYU KERING',
+        'LEPAS CACAT, LEPAS DORENG, TIDAK BOLEH ADA HATI',
+        'NO TAMBALAN, TANPA TROCOH, DAN TIDAK PECAH',
+        'UKURAN SESUAI DENGAN KETENTUAN PABRIK',
+      ],
+      bindingClause: 'Dengan ini saya / supplier bersedia mengerjakan order sesuai dengan yang tertera di atas, dan apabila batas waktu tanggal kirim sudah lewat, serta barang-barang yang dikirim tidak sesuai spesifikasi kualitas, maka pihak pemesan berhak memutuskan tidak menerima barang dari supplier.',
+    });
+
+    // ── Talep data
+    const talep = ref({
+      nomorForm: '',
+      tanggal: today,
+      namaPelanggan: '',
+      telepon: '',
+      email: '',
+      alamat: '',
+      proyek: '',
+      targetSelesai: '',
+      rows: [newRow()],
+      catatan: '',
+    });
+
+    // ── Teklif data
+    const teklif = ref({
+      nomorTeklif: '',
+      tanggal: today,
+      berlakuHingga: '',
+      refPermintaan: '',
+      kepada: '',
+      attnNama: '',
+      proyek: '',
+      syaratPembayaran: 'DP 50% sebelum produksi, pelunasan sebelum pengiriman',
+      estimasiSelesai: '',
+      currency: 'IDR',
+      rows: [newRow()],
+      catatan: '',
+      ppn: 11,
+      includePPN: false,
+    });
+
+    // ── Calculations
+    function calcM3(row) {
+      const p = row.panjang || 0, l = row.lebar || 0, t = row.tinggi || 0;
+      row.m3 = (p && l && t) ? parseFloat(((p * l * t) / 1000000).toFixed(6)) : 0;
+      calcTotal(row);
+    }
+    function calcM3Packing(row) {
+      const p = row.panjangPacking || 0, l = row.lebarPacking || 0, t = row.tinggiPacking || 0;
+      row.m3Packing = (p && l && t) ? parseFloat(((p * l * t) / 1000000).toFixed(6)) : 0;
+    }
+    function calcTotal(row) {
+      row.totalHarga = (row.hargaSatuan || 0) * (row.qty || 1);
+    }
+
+    // ── Formatters
+    function fmtM3(val) {
+      if (!val) return '—';
+      return val.toFixed(4) + ' m³';
+    }
+    function fmtM3Total(rows, key) {
+      const tot = rows.reduce((s, r) => s + ((r[key] || 0) * (r.qty || 1)), 0);
+      return tot ? tot.toFixed(4) + ' m³' : '—';
+    }
+    function fmtRp(val) {
+      if (!val) return '—';
+      return 'Rp ' + Number(val).toLocaleString('id-ID');
+    }
+    function fmtCurrency(val, cur) {
+      if (!val) return '—';
+      const v = Number(val);
+      if (cur === 'IDR') return 'Rp ' + v.toLocaleString('id-ID');
+      if (cur === 'USD') return '$ ' + v.toLocaleString('en-US', {minimumFractionDigits:2});
+      if (cur === 'EUR') return '€ ' + v.toLocaleString('de-DE', {minimumFractionDigits:2});
+      if (cur === 'SGD') return 'S$ ' + v.toLocaleString('en-SG', {minimumFractionDigits:2});
+      return v.toLocaleString();
+    }
+
+    // ── Totals
+    const spkTotal = computed(() => spk.value.rows.reduce((s, r) => s + (r.totalHarga || 0), 0));
+    const teklifSubtotal = computed(() => teklif.value.rows.reduce((s, r) => s + (r.totalHarga || 0), 0));
+    const teklifPPN = computed(() => teklif.value.includePPN ? teklifSubtotal.value * (teklif.value.ppn / 100) : 0);
+    const teklifGrandTotal = computed(() => teklifSubtotal.value + teklifPPN.value);
+
+    // ── Photo upload
+    function addPhoto(row, e) {
+      const files = Array.from(e.target.files);
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = ev => { row.photos.push(ev.target.result); };
+        reader.readAsDataURL(file);
+      });
+      e.target.value = '';
+    }
+
+    // ── Copy Talep → Teklif
+    function copyTalepToTeklif() {
+      if (!confirm('Salin data dari Formulir Permintaan ke Penawaran? Data penawaran yang ada akan ditimpa.')) return;
+      teklif.value.kepada = talep.value.namaPelanggan;
+      teklif.value.proyek = talep.value.proyek;
+      teklif.value.rows = deepCopyRows(talep.value.rows);
+      teklif.value.refPermintaan = talep.value.nomorForm;
+      activeForm.value = 'teklif';
+    }
+
+    // ── Reset
+    function resetActiveForm() {
+      if (!confirm('Reset form ini? Data akan hilang.')) return;
+      if (activeForm.value === 'spk') {
+        spk.value.rows = [newRow()];
+        spk.value.nomorSPK = ''; spk.value.kepada = ''; spk.value.proyek = '';
+        spk.value.deskripsiPekerjaan = ''; spk.value.tanggalKirim = '';
+      } else if (activeForm.value === 'talep') {
+        talep.value.rows = [newRow()];
+        talep.value.namaPelanggan = ''; talep.value.telepon = '';
+        talep.value.email = ''; talep.value.alamat = ''; talep.value.proyek = '';
+        talep.value.catatan = '';
+      } else {
+        teklif.value.rows = [newRow()];
+        teklif.value.nomorTeklif = ''; teklif.value.kepada = '';
+        teklif.value.attnNama = ''; teklif.value.proyek = ''; teklif.value.catatan = '';
+        teklif.value.includePPN = false;
+      }
+    }
+
+    return {
+      activeForm, formTypes, activeFormLabel,
+      companyLogo, uploadLogo,
+      spk, talep, teklif,
+      spkTotal, teklifSubtotal, teklifPPN, teklifGrandTotal,
+      calcM3, calcM3Packing, calcTotal,
+      fmtM3, fmtM3Total, fmtRp, fmtCurrency,
+      addPhoto, newRow, copyTalepToTeklif, resetActiveForm,
+      window,
+    };
+  }
+}).mount('#app');
+</script>
+</body>
+</html>

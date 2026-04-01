@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Noyan Furniture – Proje Paneli</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
+<style>
+[v-cloak]{display:none}
+.st{transition:width .22s ease}
+.din{animation:di .22s ease}
+@keyframes di{from{transform:translateX(100%)}to{transform:translateX(0)}}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:#F7F3EE}
+::-webkit-scrollbar-thumb{background:#D4AE8C;border-radius:3px}
+.ta{border-bottom:2px solid #B5803A;color:#5C3A1E;font-weight:600}
+.ti{border-bottom:2px solid transparent;color:#A8957F}
+.ti:hover{color:#5C3A1E}
+</style>
+</head>
+<body class="bg-[#F7F3EE] antialiased text-[#1C1008]" style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Inter',Arial,sans-serif">
+<div id="app" v-cloak>
+<div class="flex h-screen overflow-hidden">
+
+<!-- SIDEBAR -->
+<aside :class="[sb?'w-52':'w-14','st bg-[#FAF7F4] border-r border-[#E2D9CE] text-[#2C1A0E] flex flex-col flex-shrink-0 z-30 shadow-sm']">
+  <div class="flex items-center gap-2.5 px-3 py-4 border-b border-[#E2D9CE]">
+    <div class="w-8 h-8 bg-[#5C3A1E] rounded-lg flex items-center justify-center flex-shrink-0">
+      <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+    </div>
+    <span v-if="sb" class="font-bold text-sm text-[#5C3A1E]">Noyan Panel</span>
+  </div>
+  <button @click="sb=!sb" class="h-9 border-b border-[#E2D9CE] flex items-center justify-center text-[#A8957F] hover:text-[#2C1A0E] hover:bg-[#F0EAE2] transition-colors">
+    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="sb?'M11 19l-7-7 7-7m8 14l-7-7 7-7':'M13 5l7 7-7 7M5 5l7 7-7 7'"/></svg>
+  </button>
+  <nav class="flex-1 py-2 overflow-y-auto">
+    <button v-for="n in nav" :key="n.id" @click="view=n.id" :class="['w-full flex items-center gap-2.5 px-3 py-2.5 text-sm transition-all relative',view===n.id?'bg-[#5C3A1E] text-white rounded-lg mx-1':'text-[#6B5B4E] hover:bg-[#F0EAE2] hover:text-[#2C1A0E] rounded-lg mx-1']">
+      <span class="flex-shrink-0 w-5 h-5" v-html="n.icon"></span>
+      <span v-if="sb" class="font-medium">{{n.label}}</span>
+      <span v-if="n.id==='dashboard'&&activeAlerts>0" class="absolute right-2 top-2 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">{{activeAlerts}}</span>
+    </button>
+  </nav>
+  <div v-if="sb" class="px-3 py-2 border-t border-[#E2D9CE] text-xs text-[#A8957F]">v3.0</div>
+</aside>
+
+<!-- MAIN -->
+<div class="flex-1 flex flex-col overflow-hidden">
+  <header class="bg-white border-b border-gray-200 px-5 py-3 flex items-center justify-between flex-shrink-0 z-10">
+    <div class="flex items-center gap-3">
+      <h1 class="text-base font-semibold">{{nav.find(n=>n.id===view)?.label}}</h1>
+      <span v-if="view==='dashboard'&&activeAlerts>0" class="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full">{{activeAlerts}} aktif uyarı</span>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="text-xs text-gray-400 hidden sm:block">{{todayStr}}</span>
+      <button v-if="view==='projects'" @click="newProj()" class="bg-[#5C3A1E] hover:bg-[#7A4E2D] text-white text-sm px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>Yeni Proje
+      </button>
+      <button v-if="view==='customers'" @click="newCust()" class="bg-[#5C3A1E] hover:bg-[#7A4E2D] text-white text-sm px-3 py-1.5 rounded-lg font-medium flex items-center gap-1.5 transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>Yeni Müşteri
+      </button>
+    </div>
+  </header>
+
+  <main class="flex-1 overflow-y-auto p-4 sm:p-5">
+
+    <!-- DASHBOARD -->
+    <div v-if="view==='dashboard'">
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
+        <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm"><div class="text-2xl font-bold text-[#2C5F8A]">{{projects.filter(p=>!['tamamlandi','iptal'].includes(p.status)).length}}</div><div class="text-xs text-gray-500 mt-0.5">Aktif Proje</div></div>
+        <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm"><div class="text-2xl font-bold text-[#5C3A7E]">{{projects.filter(p=>['malzeme_tedarik','uretimde','uretim_tamamlandi','paketleme'].includes(p.status)).length}}</div><div class="text-xs text-gray-500 mt-0.5">Üretimde</div></div>
+        <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm"><div class="text-2xl font-bold text-[#3A7D44]">{{projects.filter(p=>p.status==='tamamlandi').length}}</div><div class="text-xs text-gray-500 mt-0.5">Tamamlanan</div></div>
+        <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm"><div class="text-xl font-bold text-[#B5803A]">{{fmtM(monthColl)}}</div><div class="text-xs text-gray-500 mt-0.5">Bu Ay Tahsilat</div></div>
+      </div>
+
+      <!-- Active Alerts Panel -->
+      <div v-if="activeAlerts>0" class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+        <div class="flex items-center gap-2 mb-3">
+          <svg class="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
+          <span class="text-sm font-bold text-red-700">Çözüm Bekleyen Değişiklik Bildirimleri</span>
+        </div>
+        <div class="space-y-2">
+          <div v-for="a in allActiveAlerts" :key="a.uid" @click="openDetail(a.projectId); dtab='degisiklikler'" class="flex items-center gap-3 bg-white border border-red-100 rounded-lg p-3 cursor-pointer hover:border-red-300 transition-colors">
+            <span :class="['text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0', urgencyBadge(a.urgency)]">{{urgencyLabel(a.urgency)}}</span>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium truncate">{{a.projectTitle}}</div>
+              <div class="text-xs text-gray-500 truncate">{{a.description}}</div>
+            </div>
+            <div class="text-xs text-gray-400 flex-shrink-0">{{fmtD(a.date)}}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pipeline -->
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 mb-4">
+        <h2 class="text-sm font-semibold text-gray-600 mb-3">Proje Pipeline</h2>
+        <div class="overflow-x-auto pb-2">
+          <div class="flex gap-2.5" style="min-width:max-content">
+            <div v-for="col in pipeCols" :key="col.id" class="w-44">
+              <div :class="['text-xs font-semibold px-2.5 py-1.5 rounded-t-lg text-white flex items-center justify-between',col.bg]">
+                <span>{{col.label}}</span><span class="bg-white/30 px-1.5 py-0.5 rounded-full">{{pipePs(col.ids).length}}</span>
+              </div>
+              <div class="min-h-16 bg-slate-50 border border-t-0 border-gray-200 rounded-b-lg p-1.5 space-y-1.5">
+                <div v-for="p in pipePs(col.ids)" :key="p.id" @click="openDetail(p.id)" class="bg-white border border-gray-200 rounded-lg p-2 cursor-pointer hover:border-[#B5803A] hover:shadow-sm transition-all relative">
+                  <div v-if="projAlerts(p.id)>0" class="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold">{{projAlerts(p.id)}}</div>
+                  <div class="text-xs font-semibold truncate">{{p.title}}</div>
+                  <div class="text-xs text-gray-400 truncate">{{getCust(p.customerId)?.name}}</div>
+                  <div v-if="p.totalAmount" class="text-xs text-[#B5803A] font-medium mt-0.5">{{fmtM(p.totalAmount)}}</div>
+                  <div v-if="p.deliveryDate" :class="['text-xs mt-0.5',isOD(p.deliveryDate)&&!['tamamlandi','iptal'].includes(p.status)?'text-red-500 font-semibold':'text-gray-400']">📅 {{fmtD(p.deliveryDate)}}</div>
+                </div>
+                <div v-if="!pipePs(col.ids).length" class="py-2 text-center text-xs text-gray-300">boş</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid lg:grid-cols-2 gap-4">
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+          <div class="flex items-center justify-between mb-3">
+            <h2 class="text-sm font-semibold text-gray-600">Son Güncellenenler</h2>
+            <button @click="view='projects'" class="text-xs text-[#B5803A] hover:underline">Tümü →</button>
+          </div>
+          <div class="space-y-1.5">
+            <div v-for="p in recentPs" :key="p.id" @click="openDetail(p.id)" class="flex items-center gap-2 p-2 rounded-lg hover:bg-gray-50 cursor-pointer">
+              <div :class="['w-2 h-2 rounded-full flex-shrink-0',stageClr(p.status)]"></div>
+              <div class="flex-1 min-w-0"><div class="text-sm font-medium truncate">{{p.title}}</div><div class="text-xs text-gray-400">{{getCust(p.customerId)?.name}} · {{stgLbl(p.status)}}</div></div>
+              <div class="text-sm font-semibold text-gray-600 flex-shrink-0">{{fmtM(p.totalAmount)}}</div>
+            </div>
+            <div v-if="!projects.length" class="py-6 text-center text-gray-400 text-sm">Henüz proje yok</div>
+          </div>
+        </div>
+        <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+          <h2 class="text-sm font-semibold text-gray-600 mb-3">Muhasebe Bekleyen Ödemeler</h2>
+          <div class="space-y-1.5">
+            <div v-for="item in pendingAcct" :key="item.payId" @click="openDetail(item.projectId)" class="flex items-center gap-2 p-2 rounded-lg hover:bg-orange-50 cursor-pointer border border-orange-100">
+              <div class="w-7 h-7 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0 text-orange-500 font-bold text-xs">₺</div>
+              <div class="flex-1 min-w-0"><div class="text-sm font-medium truncate">{{item.projectTitle}}</div><div class="text-xs text-gray-400">{{payLbl(item.type)}} · {{fmtD(item.date)}}</div></div>
+              <div class="text-sm font-bold text-orange-600">{{fmtM(item.amount)}}</div>
+            </div>
+            <div v-if="!pendingAcct.length" class="py-6 text-center text-gray-400 text-sm">Bekleyen ödeme yok ✓</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROJELER -->
+    <div v-if="view==='projects'">
+      <div class="flex flex-col sm:flex-row gap-2 mb-4">
+        <input v-model="pQ" placeholder="Proje veya müşteri ara..." class="flex-1 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]">
+        <select v-model="pF" class="bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]">
+          <option value="">Tüm Durumlar</option>
+          <option v-for="s in STAGES" :key="s.id" :value="s.id">{{s.label}}</option>
+        </select>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-100">
+            <tr>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase">Proje</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase hidden md:table-cell">Müşteri</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase hidden lg:table-cell">Durum</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase hidden md:table-cell">Tutar</th>
+              <th class="text-left px-4 py-3 text-xs font-semibold text-gray-400 uppercase hidden lg:table-cell">Termin</th>
+              <th class="px-4 py-3"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            <tr v-for="p in filtPs" :key="p.id" @click="openDetail(p.id)" class="hover:bg-[#FBF5E8] cursor-pointer transition-colors">
+              <td class="px-4 py-3">
+                <div class="flex items-center gap-2">
+                  <span class="font-medium">{{p.title}}</span>
+                  <span v-if="projAlerts(p.id)>0" class="w-4 h-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center font-bold flex-shrink-0">{{projAlerts(p.id)}}</span>
+                </div>
+                <div class="text-xs text-gray-400 md:hidden">{{getCust(p.customerId)?.name}}</div>
+                <div class="flex items-center gap-1 mt-0.5 lg:hidden"><span :class="['w-1.5 h-1.5 rounded-full',stageClr(p.status)]"></span><span class="text-xs text-gray-500">{{stgLbl(p.status)}}</span></div>
+              </td>
+              <td class="px-4 py-3 hidden md:table-cell text-gray-600">{{getCust(p.customerId)?.name}}</td>
+              <td class="px-4 py-3 hidden lg:table-cell"><span :class="['inline-flex px-2 py-0.5 rounded-full text-xs font-medium',stageBdg(p.status)]">{{stgLbl(p.status)}}</span></td>
+              <td class="px-4 py-3 hidden md:table-cell font-semibold text-gray-700">{{fmtM(p.totalAmount)}}</td>
+              <td class="px-4 py-3 hidden lg:table-cell"><span v-if="p.deliveryDate" :class="['text-xs',isOD(p.deliveryDate)&&!['tamamlandi','iptal'].includes(p.status)?'text-red-500 font-semibold':'text-gray-400']">{{fmtD(p.deliveryDate)}}</span><span v-else class="text-xs text-gray-300">—</span></td>
+              <td class="px-4 py-3 text-right text-gray-300">›</td>
+            </tr>
+            <tr v-if="!filtPs.length"><td colspan="6" class="px-4 py-12 text-center text-gray-400 text-sm">Proje bulunamadı. <button @click="newProj()" class="ml-1 text-[#B5803A] hover:underline">Yeni ekle →</button></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MÜŞTERİLER -->
+    <div v-if="view==='customers'">
+      <div class="mb-4"><input v-model="cQ" placeholder="Müşteri ara..." class="w-full sm:w-72 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"></div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div v-for="c in filtCs" :key="c.id" @click="editCust(c)" class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 hover:border-[#D4A855] cursor-pointer transition-all">
+          <div class="flex items-start justify-between">
+            <div class="min-w-0"><div class="font-semibold truncate">{{c.name}}</div><div class="text-sm text-gray-500 mt-0.5">{{c.phone}}</div><div class="text-xs text-gray-400">{{c.email}}</div></div>
+            <div class="bg-[#FBF5E8] text-[#7A4E2D] text-xs font-semibold px-2 py-1 rounded-full flex-shrink-0 ml-2">{{cProjCnt(c.id)}}p</div>
+          </div>
+          <div v-if="c.address" class="mt-2 pt-2 border-t border-gray-50 text-xs text-gray-400 truncate">📍 {{c.address}}</div>
+        </div>
+        <div v-if="!filtCs.length" class="col-span-3 py-12 text-center text-gray-400 text-sm">Müşteri bulunamadı. <button @click="newCust()" class="ml-1 text-[#B5803A] hover:underline">Yeni ekle →</button></div>
+      </div>
+    </div>
+
+    <!-- ÖDEMELER -->
+    <div v-if="view==='payments'">
+      <div class="grid grid-cols-3 gap-3 mb-4">
+        <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm"><div class="text-xl font-bold text-emerald-600">{{fmtM(totColl)}}</div><div class="text-xs text-gray-500 mt-0.5">Toplam Tahsilat</div></div>
+        <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm"><div class="text-xl font-bold text-orange-500">{{fmtM(totPend)}}</div><div class="text-xs text-gray-500 mt-0.5">Tahsil Edilecek</div></div>
+        <div class="bg-white rounded-xl p-4 border border-gray-100 shadow-sm"><div class="text-xl font-bold text-gray-700">{{fmtM(totVal)}}</div><div class="text-xs text-gray-500 mt-0.5">Toplam Proje Değeri</div></div>
+      </div>
+      <div class="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+        <div class="px-4 py-3 border-b border-gray-100 flex items-center justify-between"><span class="text-sm font-semibold text-gray-700">Tüm Ödeme Hareketleri</span><span class="text-xs text-gray-400">{{allPays.length}} kayıt</span></div>
+        <div class="divide-y divide-gray-50">
+          <div v-for="pay in allPays" :key="pay.uid" @click="openDetail(pay.projectId)" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 cursor-pointer">
+            <div :class="['w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold',pay.type==='on_odeme'?'bg-blue-100 text-blue-700':pay.type==='ara_odeme'?'bg-purple-100 text-purple-700':'bg-green-100 text-green-700']">{{pay.type==='on_odeme'?'Ö':pay.type==='ara_odeme'?'A':'K'}}</div>
+            <div class="flex-1 min-w-0"><div class="text-sm font-medium truncate">{{pay.projectTitle}}</div><div class="text-xs text-gray-400">{{payLbl(pay.type)}} · {{pay.method?methodLbl(pay.method)+' · ':''}}{{fmtD(pay.date)}}</div></div>
+            <div class="text-sm font-bold text-gray-700">{{fmtM(pay.amount)}}</div>
+            <span :class="['text-xs px-2 py-0.5 rounded-full flex-shrink-0',pay.sentToAccounting?'bg-emerald-100 text-emerald-700':'bg-orange-100 text-orange-700']">{{pay.sentToAccounting?'✓ Muhasebe':'Bekliyor'}}</span>
+          </div>
+          <div v-if="!allPays.length" class="py-12 text-center text-gray-400 text-sm">Henüz ödeme kaydı yok</div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+</div>
+
+<!-- DETAIL DRAWER -->
+<div v-if="detail" class="fixed inset-0 z-50 flex" @click.self="detail=null">
+  <div class="absolute inset-0 bg-black/40" @click="detail=null"></div>
+  <div class="ml-auto relative bg-white w-full max-w-2xl h-full overflow-hidden flex flex-col shadow-2xl din">
+    <div class="border-b border-gray-100 px-5 py-4 flex items-start justify-between flex-shrink-0">
+      <div class="min-w-0 pr-3">
+        <div class="flex items-center gap-2">
+          <h2 class="font-bold text-lg leading-tight truncate">{{detail.title}}</h2>
+          <span v-if="projAlerts(detail.id)>0" class="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full flex-shrink-0">{{projAlerts(detail.id)}} uyarı</span>
+        </div>
+        <div class="text-sm text-gray-400 mt-0.5">{{getCust(detail.customerId)?.name}}</div>
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <button @click="startEdit(detail)" class="text-xs border border-[#D4AE8C] text-[#7A4E2D] hover:bg-[#FBF5E8] px-3 py-1.5 rounded-lg transition-colors">Düzenle</button>
+        <button @click="detail=null" class="text-gray-400 hover:text-gray-600 p-1">✕</button>
+      </div>
+    </div>
+
+    <!-- TABS -->
+    <div class="flex border-b border-gray-100 bg-white flex-shrink-0 overflow-x-auto">
+      <button v-for="t in dtabs" :key="t.id" @click="dtab=t.id" :class="['px-3 py-2.5 text-xs font-medium whitespace-nowrap transition-colors relative',dtab===t.id?'ta':'ti']">
+        {{t.label}}
+        <span v-if="t.id==='degisiklikler'&&projAlerts(detail.id)>0" class="ml-1 bg-red-500 text-white text-xs px-1 py-0 rounded-full">{{projAlerts(detail.id)}}</span>
+      </button>
+    </div>
+
+    <div class="flex-1 overflow-y-auto p-5 space-y-4">
+
+      <!-- GENEL -->
+      <div v-if="dtab==='genel'" class="space-y-4">
+        <div class="bg-[#FBF5E8] border border-[#E2D9CE] rounded-xl p-4">
+          <div class="text-xs font-semibold text-[#7A4E2D] uppercase tracking-wide mb-2">Durum</div>
+          <div class="mb-3"><span :class="['inline-flex px-3 py-1 rounded-full text-sm font-semibold',stageBdg(detail.status)]">{{stgLbl(detail.status)}}</span></div>
+          <div class="flex flex-wrap gap-1.5">
+            <button v-for="s in STAGES" :key="s.id" @click="setSt(s.id)" :class="['text-xs px-2.5 py-1 rounded-full border transition-all font-medium',detail.status===s.id?'bg-[#5C3A1E] text-white border-[#5C3A1E]':stgIdx(s.id)<stgIdx(detail.status)?'bg-[#EFF7EF] text-[#3A7D44] border-[#B5D4B5]':'bg-white text-[#6B5B4E] border-[#E2D9CE] hover:border-[#B5803A]']">{{s.label}}</button>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="bg-gray-50 rounded-xl p-3"><div class="text-xs text-gray-400 mb-1">Proje Değeri</div><div class="text-lg font-bold">{{fmtM(detail.totalAmount)}}</div></div>
+          <div class="bg-gray-50 rounded-xl p-3"><div class="text-xs text-gray-400 mb-1">Tahsil Edilen</div><div class="text-lg font-bold text-emerald-600">{{fmtM(dColl)}}</div><div class="text-xs text-gray-400">kalan: {{fmtM((detail.totalAmount||0)-dColl)}}</div></div>
+          <div class="bg-gray-50 rounded-xl p-3"><div class="text-xs text-gray-400 mb-1">Termin</div><div :class="['text-sm font-semibold',detail.deliveryDate&&isOD(detail.deliveryDate)&&!['tamamlandi','iptal'].includes(detail.status)?'text-red-500':'']">{{detail.deliveryDate?fmtD(detail.deliveryDate):'—'}}</div></div>
+          <div class="bg-gray-50 rounded-xl p-3"><div class="text-xs text-gray-400 mb-1">Teslimat Türü</div><div class="text-sm font-semibold">{{detail.deliveryType==='kurulum'?'Teslimat + Kurulum':'Sadece Teslimat'}}</div></div>
+        </div>
+        <div class="border border-gray-100 rounded-xl p-4">
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Müşteri</div>
+          <template v-if="getCust(detail.customerId)">
+            <div class="font-semibold">{{getCust(detail.customerId).name}}</div>
+            <div class="text-sm text-gray-500 mt-1.5 space-y-0.5">
+              <div v-if="getCust(detail.customerId).phone">📞 {{getCust(detail.customerId).phone}}</div>
+              <div v-if="getCust(detail.customerId).email">✉️ {{getCust(detail.customerId).email}}</div>
+              <div v-if="getCust(detail.customerId).address">📍 {{getCust(detail.customerId).address}}</div>
+            </div>
+          </template>
+        </div>
+        <div v-if="detail.description" class="border border-gray-100 rounded-xl p-4"><div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Proje Notu</div><p class="text-sm text-gray-700 whitespace-pre-wrap">{{detail.description}}</p></div>
+        <div class="border border-gray-100 rounded-xl p-4">
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Durum Geçmişi</div>
+          <div class="relative pl-4">
+            <div class="absolute left-1.5 top-0 bottom-0 w-0.5 bg-gray-100"></div>
+            <div class="space-y-2.5">
+              <div v-for="h in [...(detail.statusHistory||[])].reverse()" :key="h.date" class="flex gap-2.5 items-start">
+                <div :class="['w-3 h-3 rounded-full border-2 border-white flex-shrink-0 -ml-5 mt-1 z-10 relative',stageClr(h.stage)]"></div>
+                <div><div class="text-sm font-medium">{{stgLbl(h.stage)}}</div><div class="text-xs text-gray-400">{{fmtDT(h.date)}}</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="border border-red-100 rounded-xl p-3 flex items-center justify-between">
+          <span class="text-xs text-gray-400">Tehlikeli Alan</span>
+          <button @click="delProj()" class="text-sm text-red-500 hover:text-red-700 font-medium">Projeyi Sil</button>
+        </div>
+      </div>
+
+      <!-- ÜRETİM & FASON -->
+      <div v-if="dtab==='uretim'" class="space-y-4">
+        <div>
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-gray-700">Üretim Aşamaları</h3>
+            <span class="text-xs text-gray-400">Her aşamada QC zorunlu</span>
+          </div>
+          <div class="space-y-2">
+            <div v-for="(st,i) in detail.productionStages" :key="st.id" class="border border-gray-100 rounded-xl overflow-hidden">
+              <div class="flex items-center gap-3 px-4 py-3 bg-gray-50">
+                <div :class="['w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold',st.status==='tamamlandi'?'bg-emerald-100 text-emerald-700':st.status==='devam_ediyor'?'bg-blue-100 text-blue-700':st.status==='revizyon'?'bg-red-100 text-red-700':'bg-gray-100 text-gray-400']">{{i+1}}</div>
+                <div class="flex-1"><div class="text-sm font-semibold">{{st.name}}</div><div v-if="st.completedDate" class="text-xs text-gray-400">Tamamlandı: {{fmtD(st.completedDate)}}</div></div>
+                <select :value="st.status" @change="setStgSt(st,$event.target.value)" class="text-xs border border-gray-200 rounded-lg px-2 py-1 focus:outline-none bg-white">
+                  <option value="bekliyor">⏳ Bekliyor</option>
+                  <option value="devam_ediyor">🔧 Devam Ediyor</option>
+                  <option value="tamamlandi">✅ Tamamlandı</option>
+                  <option value="revizyon">🔴 Revizyon</option>
+                </select>
+              </div>
+              <div v-if="st.status==='tamamlandi'||st.qcNotes" class="px-4 py-2 border-t border-gray-100 bg-white">
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-medium text-gray-500">QC:</span>
+                  <button @click="setQC(st,'gecti')" :class="['text-xs px-2.5 py-1 rounded-full border transition-all',st.qcStatus==='gecti'?'bg-emerald-500 text-white border-emerald-500':'bg-white text-gray-500 border-gray-200 hover:border-emerald-400']">✓ Geçti</button>
+                  <button @click="setQC(st,'revizyon')" :class="['text-xs px-2.5 py-1 rounded-full border transition-all',st.qcStatus==='revizyon'?'bg-red-500 text-white border-red-500':'bg-white text-gray-500 border-gray-200 hover:border-red-400']">✗ Revizyon</button>
+                  <input v-model="st.qcNotes" @blur="saveP()" placeholder="QC notu..." class="flex-1 text-xs focus:outline-none text-gray-600 placeholder-gray-300 bg-transparent border-b border-transparent focus:border-gray-200">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- FASON -->
+        <div class="border-t border-gray-100 pt-4">
+          <div class="flex items-center justify-between mb-3">
+            <h3 class="text-sm font-semibold text-gray-700">Fason / Taşeron İşler</h3>
+            <button @click="addFason()" class="text-xs text-[#B5803A] hover:underline font-medium">+ Fason Ekle</button>
+          </div>
+          <div v-if="!detail.fasonItems||!detail.fasonItems.length" class="text-sm text-gray-400 py-4 text-center border border-dashed border-gray-200 rounded-xl">Fason iş yok. <button @click="addFason()" class="text-[#B5803A] hover:underline ml-1">Ekle →</button></div>
+          <div v-else class="space-y-4">
+            <div v-for="f in detail.fasonItems" :key="f.id" class="border border-gray-100 rounded-xl p-4 space-y-3">
+              <!-- Header -->
+              <div class="flex items-start justify-between gap-2">
+                <div class="flex-1 space-y-1">
+                  <input v-model="f.supplierName" @blur="saveP()" placeholder="Taşeron adı..." class="text-sm font-semibold w-full focus:outline-none border-b border-transparent hover:border-gray-200 focus:border-[#B5803A] pb-0.5 bg-transparent">
+                  <input v-model="f.type" @blur="saveP()" placeholder="İş türü (sünger, kumaş, dikim, metal, taş...)" class="text-xs text-gray-500 w-full focus:outline-none bg-transparent">
+                </div>
+                <button @click="removeFason(f.id)" class="text-gray-300 hover:text-red-400 flex-shrink-0">✕</button>
+              </div>
+
+              <!-- Toplam adet & birim -->
+              <div class="grid grid-cols-3 gap-2 text-xs">
+                <div>
+                  <label class="text-gray-400 block mb-0.5">Toplam Sipariş</label>
+                  <div class="flex gap-1">
+                    <input v-model.number="f.totalQuantity" @blur="saveP()" type="number" placeholder="0" class="w-full border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+                    <select v-model="f.unit" @change="saveP()" class="border border-gray-200 rounded px-1 py-1 focus:outline-none text-xs w-16">
+                      <option>adet</option><option>m²</option><option>m</option><option>set</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <label class="text-gray-400 block mb-0.5">Teklif Tutarı</label>
+                  <input v-model.number="f.quotedAmount" @blur="saveP()" type="number" placeholder="0" class="w-full border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+                </div>
+                <div>
+                  <label class="text-gray-400 block mb-0.5">İş Emri Tarihi</label>
+                  <input v-model="f.workOrderDate" @blur="saveP()" type="date" class="w-full border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+                </div>
+                <div>
+                  <label class="text-gray-400 block mb-0.5">Ön Ödeme (₺)</label>
+                  <input v-model.number="f.prepaymentAmount" @blur="saveP()" type="number" placeholder="0" class="w-full border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+                </div>
+                <div>
+                  <label class="text-gray-400 block mb-0.5">Ön Ödeme Tarihi</label>
+                  <input v-model="f.prepaymentDate" @blur="saveP()" type="date" class="w-full border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+                </div>
+                <div>
+                  <label class="text-gray-400 block mb-0.5">Fason Bedeli (₺)</label>
+                  <input v-model.number="f.finalAmount" @blur="saveP()" type="number" placeholder="0" class="w-full border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+                </div>
+              </div>
+
+              <!-- Durum toggles -->
+              <div class="flex flex-wrap gap-1.5 pt-1 border-t border-gray-50">
+                <button @click="f.workOrderSent=!f.workOrderSent;saveP()" :class="['text-xs px-2.5 py-1 rounded-full border',f.workOrderSent?'bg-blue-50 text-blue-700 border-blue-200':'bg-gray-50 text-gray-500 border-gray-200']">{{f.workOrderSent?'✓':'○'}} İş Emri</button>
+                <button @click="f.materialSent=!f.materialSent;saveP()" :class="['text-xs px-2.5 py-1 rounded-full border',f.materialSent?'bg-purple-50 text-purple-700 border-purple-200':'bg-gray-50 text-gray-500 border-gray-200']">{{f.materialSent?'✓':'○'}} Malzeme Gönderildi</button>
+                <button @click="f.invoicePaid=!f.invoicePaid;saveP()" :class="['text-xs px-2.5 py-1 rounded-full border',f.invoicePaid?'bg-emerald-50 text-emerald-700 border-emerald-200':'bg-gray-50 text-gray-500 border-gray-200']">{{f.invoicePaid?'✓':'○'}} Fatura Ödendi</button>
+              </div>
+
+              <!-- KISMİ SEVKİYATLAR -->
+              <div class="bg-slate-50 rounded-lg p-3 space-y-2">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-2">
+                    <span class="text-xs font-semibold text-gray-600">Kısmi Sevkiyatlar</span>
+                    <span v-if="f.totalQuantity>0" class="text-xs text-gray-400">({{batchTotal(f)}} / {{f.totalQuantity}} {{f.unit||'adet'}} teslim alındı)</span>
+                  </div>
+                  <button @click="addBatch(f)" class="text-xs text-[#B5803A] hover:underline">+ Sevkiyat</button>
+                </div>
+                <!-- Progress bar -->
+                <div v-if="f.totalQuantity>0" class="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div class="h-full bg-emerald-500 rounded-full transition-all" :style="`width:${Math.min(100,(batchTotal(f)/(f.totalQuantity||1))*100)}%`"></div>
+                </div>
+                <div v-if="f.batches&&f.batches.length" class="space-y-2">
+                  <div v-for="b in f.batches" :key="b.id" class="bg-white border border-gray-200 rounded-lg p-2.5 space-y-2">
+                    <div class="grid grid-cols-3 gap-2 text-xs">
+                      <div>
+                        <label class="text-gray-400 block mb-0.5">Adet</label>
+                        <input v-model.number="b.quantity" @blur="saveP()" type="number" placeholder="0" class="w-full border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+                      </div>
+                      <div>
+                        <label class="text-gray-400 block mb-0.5">Gönderim Tarihi</label>
+                        <input v-model="b.sentDate" @blur="saveP()" type="date" class="w-full border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+                      </div>
+                      <div>
+                        <label class="text-gray-400 block mb-0.5">Teslim Alındı</label>
+                        <input v-model="b.receivedDate" @blur="saveP()" type="date" class="w-full border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+                      </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <label class="text-gray-400 block mb-0.5">Sonraki İşlem (bizde)</label>
+                        <input v-model="b.nextProcess" @blur="saveP()" placeholder="zımpara, boya, kurutma..." class="w-full border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+                      </div>
+                      <div>
+                        <label class="text-gray-400 block mb-0.5">Durum</label>
+                        <select :value="b.status" @change="b.status=$event.target.value;saveP()" :class="['w-full border rounded px-2 py-1 focus:outline-none text-xs',b.status==='tamamlandi'?'border-emerald-300 bg-emerald-50':b.status==='isleniyor'?'border-blue-300 bg-blue-50':b.status==='teslim_alindi'?'border-purple-300 bg-purple-50':'border-gray-200']">
+                          <option value="bekleniyor">⏳ Bekleniyor</option>
+                          <option value="teslim_alindi">📦 Teslim Alındı</option>
+                          <option value="isleniyor">🔧 İşleniyor</option>
+                          <option value="tamamlandi">✅ Tamamlandı</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="flex gap-2 text-xs">
+                      <input v-model="b.notes" @blur="saveP()" placeholder="Not..." class="flex-1 border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+                      <button @click="removeBatch(f,b.id)" class="text-gray-300 hover:text-red-400 px-1">✕</button>
+                    </div>
+                  </div>
+                </div>
+                <div v-else class="text-xs text-gray-400 text-center py-1">Henüz sevkiyat kaydı yok</div>
+              </div>
+
+              <!-- Atölye Ziyaretleri -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-medium text-gray-500">Atölye Ziyaretleri</span>
+                  <button @click="addVisit(f)" class="text-xs text-[#B5803A] hover:underline">+ Ziyaret</button>
+                </div>
+                <div v-if="f.visits&&f.visits.length" class="space-y-1.5">
+                  <div v-for="v in f.visits" :key="v.id" class="flex gap-2 text-xs">
+                    <input v-model="v.date" @blur="saveP()" type="date" class="border border-gray-200 rounded px-1.5 py-0.5 focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+                    <input v-model="v.notes" @blur="saveP()" placeholder="Ziyaret notu..." class="flex-1 border border-gray-200 rounded px-2 py-0.5 focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+                    <button @click="removeVisit(f,v.id)" class="text-gray-300 hover:text-red-400">✕</button>
+                  </div>
+                </div>
+                <div v-else class="text-xs text-gray-400">Henüz ziyaret yok</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MALZEME -->
+      <div v-if="dtab==='malzeme'" class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-semibold text-gray-700">Malzeme Listesi</h3>
+          <button @click="addMat()" class="text-xs text-[#B5803A] hover:underline font-medium">+ Malzeme Ekle</button>
+        </div>
+        <div v-if="!detail.materials||!detail.materials.length" class="text-sm text-gray-400 py-6 text-center border border-dashed border-gray-200 rounded-xl">Malzeme kaydı yok. <button @click="addMat()" class="text-[#B5803A] hover:underline ml-1">Ekle →</button></div>
+        <div v-else class="space-y-2">
+          <div v-for="m in detail.materials" :key="m.id" class="border border-gray-100 rounded-xl p-3 space-y-2">
+            <div class="flex items-center gap-2">
+              <input v-model="m.name" @blur="saveP()" placeholder="Malzeme adı" class="flex-1 text-sm font-medium focus:outline-none border-b border-transparent hover:border-gray-200 focus:border-[#B5803A] bg-transparent">
+              <select :value="m.status" @change="m.status=$event.target.value;saveP()" :class="['text-xs px-2 py-1 rounded-full border font-medium focus:outline-none',m.status==='teslim_alindi'?'bg-emerald-100 text-emerald-700 border-emerald-200':m.status==='siparis_verildi'?'bg-blue-100 text-blue-700 border-blue-200':'bg-gray-100 text-gray-600 border-gray-200']">
+                <option value="bekliyor">⏳ Bekliyor</option>
+                <option value="siparis_verildi">📦 Sipariş Verildi</option>
+                <option value="teslim_alindi">✅ Teslim Alındı</option>
+              </select>
+              <button @click="removeMat(m.id)" class="text-gray-300 hover:text-red-400">✕</button>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+              <div><label class="text-gray-400 block mb-0.5">Miktar</label>
+                <div class="flex gap-1">
+                  <input v-model.number="m.quantity" @blur="saveP()" type="number" placeholder="0" class="w-full border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+                  <select v-model="m.unit" @change="saveP()" class="border border-gray-200 rounded px-1 py-1 focus:outline-none text-xs"><option>adet</option><option>m²</option><option>m</option><option>kg</option><option>lt</option></select>
+                </div>
+              </div>
+              <div><label class="text-gray-400 block mb-0.5">Tedarikçi</label><input v-model="m.supplier" @blur="saveP()" placeholder="Tedarikçi" class="w-full border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B5803A]"></div>
+              <div><label class="text-gray-400 block mb-0.5">Sipariş Tarihi</label><input v-model="m.orderDate" @blur="saveP()" type="date" class="w-full border border-gray-200 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B5803A]"></div>
+              <div><label class="text-gray-400 block mb-0.5">Beklenen Teslim</label><input v-model="m.expectedDelivery" @blur="saveP()" type="date" :class="['w-full border rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-[#B5803A]',m.expectedDelivery&&isOD(m.expectedDelivery)&&m.status!=='teslim_alindi'?'border-red-300 bg-red-50':'border-gray-200']"></div>
+            </div>
+            <label class="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer"><input type="checkbox" v-model="m.isFromStock" @change="saveP()" class="accent-[#5C3A1E]"> Stoktan alındı</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- TESLİMAT -->
+      <div v-if="dtab==='teslimat'" class="space-y-4">
+        <div class="border border-gray-100 rounded-xl p-4 space-y-3">
+          <div class="text-xs font-semibold text-gray-400 uppercase tracking-wide">Teslimat Bilgileri</div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-xs text-gray-500 block mb-1">Planlanan Tarih</label><input v-model="detail.delivery.plannedDate" @blur="saveP()" type="date" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"></div>
+            <div><label class="text-xs text-gray-500 block mb-1">Gerçekleşen Tarih</label><input v-model="detail.delivery.actualDate" @blur="saveP()" type="date" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"></div>
+          </div>
+          <div><label class="text-xs text-gray-500 block mb-1">Teslimat Adresi</label><textarea v-model="detail.delivery.address" @blur="saveP()" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A] resize-none"></textarea></div>
+          <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" v-model="detail.delivery.handoverSigned" @change="saveP()" class="accent-[#5C3A1E] w-4 h-4"><span>Teslim tesellüm tutanağı imzalandı</span></label>
+        </div>
+        <div class="border border-gray-100 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3"><div class="text-xs font-semibold text-gray-400 uppercase">Kurulum Ekibi</div><button @click="addTM()" class="text-xs text-[#B5803A] hover:underline">+ Kişi</button></div>
+          <div v-if="detail.delivery.team&&detail.delivery.team.length" class="space-y-2">
+            <div v-for="m in detail.delivery.team" :key="m.id" class="flex gap-2">
+              <input v-model="m.name" @blur="saveP()" placeholder="Ad Soyad" class="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+              <input v-model="m.role" @blur="saveP()" placeholder="Görevi" class="w-28 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+              <button @click="removeTM(m.id)" class="text-gray-300 hover:text-red-400 px-1">✕</button>
+            </div>
+          </div>
+          <div v-else class="text-sm text-gray-400">Ekip eklenmedi</div>
+        </div>
+        <div class="border border-gray-100 rounded-xl p-4">
+          <div class="flex items-center justify-between mb-3"><div class="text-xs font-semibold text-gray-400 uppercase">Giderler</div><button @click="addExp()" class="text-xs text-[#B5803A] hover:underline">+ Gider</button></div>
+          <div v-if="detail.delivery.expenses&&detail.delivery.expenses.length" class="space-y-2">
+            <div v-for="e in detail.delivery.expenses" :key="e.id" class="flex gap-2 items-center">
+              <input v-model="e.type" @blur="saveP()" placeholder="Yakıt, yemek, nakliye..." class="flex-1 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+              <input v-model.number="e.amount" @blur="saveP()" type="number" placeholder="₺" class="w-24 border border-gray-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-1 focus:ring-[#B5803A]">
+              <button @click="removeExp(e.id)" class="text-gray-300 hover:text-red-400 px-1">✕</button>
+            </div>
+            <div class="text-right text-sm font-semibold text-gray-700 pt-1 border-t border-gray-100">Toplam: {{fmtM(detail.delivery.expenses.reduce((s,e)=>s+(e.amount||0),0))}}</div>
+          </div>
+          <div v-else class="text-sm text-gray-400">Gider kaydı yok</div>
+        </div>
+      </div>
+
+      <!-- DEĞİŞİKLİKLER -->
+      <div v-if="dtab==='degisiklikler'" class="space-y-4">
+        <!-- Yeni uyarı formu -->
+        <div class="border border-[#E2D9CE] bg-[#FBF5E8] rounded-xl p-4 space-y-3">
+          <div class="text-xs font-semibold text-[#7A4E2D] uppercase tracking-wide">Yeni Değişiklik Bildirimi</div>
+          <div><label class="text-xs text-gray-600 block mb-1">Açıklama *</label>
+            <textarea v-model="alertForm.description" rows="2" placeholder="Müşteri neyi değiştirmek istiyor? Ne değişti?" class="w-full border border-[#E2D9CE] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A] resize-none bg-white"></textarea>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div><label class="text-xs text-gray-600 block mb-1">Aciliyet</label>
+              <select v-model="alertForm.urgency" class="w-full border border-[#E2D9CE] rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A] bg-white">
+                <option value="dusuk">🟢 Düşük</option>
+                <option value="orta">🟡 Orta</option>
+                <option value="yuksek">🔴 Yüksek</option>
+                <option value="kritik">⚫ KRİTİK — Üretimi Durdur</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs text-gray-600 block mb-1">Etkilenen Taraflar</label>
+              <div class="space-y-1">
+                <label class="flex items-center gap-2 text-xs cursor-pointer"><input type="checkbox" v-model="alertForm.affectedInHouse" class="accent-[#5C3A1E]"> In-house Ekip</label>
+                <label v-for="f in (detail.fasonItems||[])" :key="f.id" class="flex items-center gap-2 text-xs cursor-pointer">
+                  <input type="checkbox" :value="f.id" v-model="alertForm.affectedFasonIds" class="accent-[#5C3A1E]"> {{f.supplierName||'Fason '+f.id.substr(0,4)}}
+                </label>
+              </div>
+            </div>
+          </div>
+          <button @click="addAlert()" class="w-full bg-[#5C3A1E] hover:bg-[#7A4E2D] text-white py-2 rounded-lg text-sm font-semibold transition-colors">Bildirimi Kaydet</button>
+        </div>
+
+        <!-- Alert listesi -->
+        <div v-if="!detail.changeAlerts||!detail.changeAlerts.length" class="text-sm text-gray-400 py-6 text-center border border-dashed border-gray-200 rounded-xl">Henüz değişiklik bildirimi yok</div>
+        <div v-else class="space-y-3">
+          <div v-for="a in [...(detail.changeAlerts||[])].reverse()" :key="a.id" :class="['border rounded-xl p-4 space-y-3',a.resolvedAt?'border-gray-100 opacity-60':'border-orange-100 bg-orange-50/30']">
+            <div class="flex items-start justify-between gap-2">
+              <div class="flex items-start gap-2 flex-1 min-w-0">
+                <span :class="['text-xs font-bold px-2 py-0.5 rounded-full flex-shrink-0 mt-0.5',urgencyBadge(a.urgency)]">{{urgencyLabel(a.urgency)}}</span>
+                <div>
+                  <p class="text-sm font-medium text-gray-800">{{a.description}}</p>
+                  <p class="text-xs text-gray-400 mt-0.5">{{fmtDT(a.date)}}</p>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <button v-if="!a.resolvedAt" @click="resolveAlert(a.id)" class="text-xs bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-full hover:bg-emerald-100 transition-colors">Çözüldü ✓</button>
+                <span v-else class="text-xs text-gray-400">Çözüldü {{fmtD(a.resolvedAt)}}</span>
+              </div>
+            </div>
+            <!-- İletim durumu -->
+            <div v-if="!a.resolvedAt" class="bg-white rounded-lg p-3 space-y-2">
+              <div class="text-xs font-medium text-gray-500 mb-1">İletim Durumu:</div>
+              <div v-if="a.affectedInHouse" class="flex items-center gap-2">
+                <button @click="toggleNotif(a,'inhouse')" :class="['text-xs px-2.5 py-1 rounded-full border transition-all',a.notifiedInHouse?'bg-emerald-50 text-emerald-700 border-emerald-200':'bg-gray-50 text-gray-600 border-gray-200 hover:border-emerald-300']">
+                  {{a.notifiedInHouse?'✓ In-house bildirildi':'○ In-house ekip'}}
+                </button>
+              </div>
+              <div v-for="fid in (a.affectedFasonIds||[])" :key="fid" class="flex items-center gap-2">
+                <button @click="toggleNotif(a,fid)" :class="['text-xs px-2.5 py-1 rounded-full border transition-all',(a.notifiedFason&&a.notifiedFason[fid])?'bg-emerald-50 text-emerald-700 border-emerald-200':'bg-gray-50 text-gray-600 border-gray-200 hover:border-emerald-300']">
+                  {{(a.notifiedFason&&a.notifiedFason[fid])?'✓':''}} {{getFasonName(fid)}} {{(a.notifiedFason&&a.notifiedFason[fid])?'bildirildi':'(bildirilmedi)'}}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ÖDEMELER -->
+      <div v-if="dtab==='odemeler'" class="space-y-4">
+        <div v-if="detail.totalAmount>0" class="bg-gray-50 rounded-xl p-4">
+          <div class="flex justify-between text-xs text-gray-500 mb-1.5"><span>Tahsilat İlerlemesi</span><span class="font-semibold">{{fmtM(dColl)}} / {{fmtM(detail.totalAmount)}}</span></div>
+          <div class="h-2.5 bg-gray-200 rounded-full overflow-hidden"><div class="h-full bg-emerald-500 rounded-full transition-all" :style="`width:${Math.min(100,(dColl/(detail.totalAmount||1))*100)}%`"></div></div>
+          <div class="text-right text-xs text-gray-400 mt-1">%{{Math.round((dColl/(detail.totalAmount||1))*100)}}</div>
+        </div>
+
+        <!-- Fason ödemeleri özeti -->
+        <div v-if="detail.fasonItems&&detail.fasonItems.length" class="border border-purple-100 bg-purple-50/30 rounded-xl p-4">
+          <div class="text-xs font-semibold text-purple-700 uppercase tracking-wide mb-2">Fason Ödemeleri Özeti</div>
+          <div class="space-y-1.5">
+            <div v-for="f in detail.fasonItems" :key="f.id" class="flex items-center justify-between text-sm">
+              <div class="text-gray-700">{{f.supplierName||'(isimsiz fason)'}} <span class="text-xs text-gray-400">{{f.type}}</span></div>
+              <div class="flex gap-3 text-xs">
+                <span class="text-blue-600">Ön: {{fmtM(f.prepaymentAmount)}}</span>
+                <span class="text-gray-600">Toplam: {{fmtM(f.finalAmount||f.quotedAmount)}}</span>
+                <span :class="f.invoicePaid?'text-emerald-600':'text-orange-500'">{{f.invoicePaid?'✓ Ödendi':'Bekliyor'}}</span>
+              </div>
+            </div>
+            <div class="border-t border-purple-100 pt-1.5 flex justify-between text-sm font-semibold">
+              <span class="text-gray-600">Toplam Fason Maliyeti</span>
+              <span class="text-purple-700">{{fmtM(detail.fasonItems.reduce((s,f)=>s+(f.finalAmount||f.quotedAmount||0),0))}}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-semibold text-gray-700">Müşteri Ödemeleri</h3>
+          <button @click="openAddPay()" class="text-xs text-[#B5803A] hover:underline font-medium">+ Ödeme Ekle</button>
+        </div>
+        <div class="space-y-2">
+          <div v-for="pay in (detail.payments||[])" :key="pay.id" class="flex items-center gap-3 p-3 border border-gray-100 rounded-xl">
+            <div :class="['w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold',pay.type==='on_odeme'?'bg-blue-100 text-blue-700':pay.type==='ara_odeme'?'bg-purple-100 text-purple-700':'bg-green-100 text-green-700']">{{pay.type==='on_odeme'?'Ö':pay.type==='ara_odeme'?'A':'K'}}</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-semibold">{{fmtM(pay.amount)}}</div>
+              <div class="text-xs text-gray-400">{{payLbl(pay.type)}}{{pay.method?' · '+methodLbl(pay.method):''}}{{pay.referenceNo?' · Ref: '+pay.referenceNo:''}} · {{fmtD(pay.date)}}</div>
+              <div v-if="pay.checkDate" class="text-xs text-orange-500">Çek Tarihi: {{fmtD(pay.checkDate)}}</div>
+              <div v-if="pay.note" class="text-xs text-gray-500 italic">{{pay.note}}</div>
+            </div>
+            <button @click="toggleAcct(pay)" :class="['text-xs px-2.5 py-1 rounded-full border transition-all font-medium flex-shrink-0',pay.sentToAccounting?'bg-emerald-50 text-emerald-700 border-emerald-200':'bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-100']">{{pay.sentToAccounting?'✓ Muhasebe':'Muhasebeye İlet'}}</button>
+          </div>
+          <div v-if="!detail.payments||!detail.payments.length" class="py-6 text-center text-gray-400 text-sm border border-dashed border-gray-200 rounded-xl">Henüz ödeme kaydı yok</div>
+        </div>
+      </div>
+
+      <!-- NOTLAR -->
+      <div v-if="dtab==='notlar'" class="space-y-3">
+        <div class="space-y-3 max-h-96 overflow-y-auto">
+          <div v-for="n in [...(detail.notes||[])].reverse()" :key="n.id" class="flex gap-2.5">
+            <div class="w-7 h-7 bg-slate-100 rounded-full flex-shrink-0 flex items-center justify-center text-slate-400 text-xs font-bold">N</div>
+            <div class="flex-1 bg-gray-50 rounded-xl p-3"><p class="text-sm text-gray-700">{{n.text}}</p><div class="text-xs text-gray-400 mt-1.5">{{fmtDT(n.date)}}</div></div>
+          </div>
+          <div v-if="!detail.notes||!detail.notes.length" class="py-6 text-center text-gray-400 text-sm">Henüz not yok</div>
+        </div>
+        <div class="flex gap-2">
+          <input v-model="noteV" @keyup.enter="addNote()" placeholder="Not ekle (Enter ile kaydet)..." class="flex-1 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]">
+          <button @click="addNote()" class="bg-[#5C3A1E] hover:bg-[#7A4E2D] text-white px-4 py-2 rounded-xl text-sm transition-colors">Ekle</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- PROJECT FORM MODAL -->
+<div v-if="showPF" class="fixed inset-0 bg-black/50 z-50 flex items-start justify-center p-4 overflow-y-auto" @click.self="showPF=false">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg my-6">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100"><h2 class="font-bold">{{pF.id?'Proje Düzenle':'Yeni Proje'}}</h2><button @click="showPF=false" class="text-gray-400 hover:text-gray-600">✕</button></div>
+    <div class="p-6 space-y-4">
+      <div><label class="text-sm font-medium text-gray-700 block mb-1">Proje Başlığı *</label><input v-model="pF.title" placeholder="Yatak Odası, Mutfak Dolabı..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"></div>
+      <div><label class="text-sm font-medium text-gray-700 block mb-1">Müşteri *</label>
+        <div class="flex gap-2">
+          <select v-model="pF.customerId" class="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"><option value="">— Müşteri Seçin —</option><option v-for="c in customers" :key="c.id" :value="c.id">{{c.name}}</option></select>
+          <button @click="newCustFP()" class="text-xs border border-dashed border-[#D4AE8C] text-[#7A4E2D] px-3 rounded-lg hover:bg-[#FBF5E8] whitespace-nowrap">+ Yeni</button>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-sm font-medium text-gray-700 block mb-1">Toplam Tutar (₺)</label><input v-model.number="pF.totalAmount" type="number" min="0" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"></div>
+        <div><label class="text-sm font-medium text-gray-700 block mb-1">Termin Tarihi</label><input v-model="pF.deliveryDate" type="date" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"></div>
+        <div><label class="text-sm font-medium text-gray-700 block mb-1">Başlangıç Durumu</label><select v-model="pF.status" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"><option v-for="s in STAGES" :key="s.id" :value="s.id">{{s.label}}</option></select></div>
+        <div><label class="text-sm font-medium text-gray-700 block mb-1">Teslimat Türü</label><select v-model="pF.deliveryType" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"><option value="kurulum">Teslimat + Kurulum</option><option value="sadece_teslimat">Sadece Teslimat</option></select></div>
+      </div>
+      <div><label class="text-sm font-medium text-gray-700 block mb-1">Proje Notu</label><textarea v-model="pF.description" rows="3" placeholder="Müşteri istekleri, ölçüler, özel notlar..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A] resize-none"></textarea></div>
+    </div>
+    <div class="flex gap-3 px-6 py-4 border-t border-gray-100"><button @click="showPF=false" class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm">İptal</button><button @click="savePF()" class="flex-1 bg-[#5C3A1E] hover:bg-[#7A4E2D] text-white py-2 rounded-lg text-sm font-semibold transition-colors">Kaydet</button></div>
+  </div>
+</div>
+
+<!-- CUSTOMER FORM MODAL -->
+<div v-if="showCF" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="showCF=false">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100"><h2 class="font-bold">{{cF.id?'Müşteri Düzenle':'Yeni Müşteri'}}</h2><button @click="showCF=false" class="text-gray-400 hover:text-gray-600">✕</button></div>
+    <div class="p-6 space-y-4">
+      <div><label class="text-sm font-medium text-gray-700 block mb-1">Ad Soyad / Firma *</label><input v-model="cF.name" placeholder="Ahmet Yılmaz / ABC Ltd." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"></div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-sm font-medium text-gray-700 block mb-1">Telefon</label><input v-model="cF.phone" placeholder="0532 000 00 00" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"></div>
+        <div><label class="text-sm font-medium text-gray-700 block mb-1">E-posta</label><input v-model="cF.email" placeholder="ornek@mail.com" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"></div>
+      </div>
+      <div><label class="text-sm font-medium text-gray-700 block mb-1">Adres</label><textarea v-model="cF.address" rows="2" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A] resize-none"></textarea></div>
+      <div><label class="text-sm font-medium text-gray-700 block mb-1">Not</label><input v-model="cF.notes" placeholder="Özel notlar..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"></div>
+    </div>
+    <div class="flex gap-3 px-6 py-4 border-t border-gray-100"><button @click="showCF=false" class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm">İptal</button><button @click="saveCF()" class="flex-1 bg-[#5C3A1E] hover:bg-[#7A4E2D] text-white py-2 rounded-lg text-sm font-semibold transition-colors">Kaydet</button></div>
+  </div>
+</div>
+
+<!-- PAYMENT MODAL -->
+<div v-if="showPayF" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" @click.self="showPayF=false">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm">
+    <div class="flex items-center justify-between px-5 py-4 border-b border-gray-100"><h2 class="font-bold">Ödeme Ekle</h2><button @click="showPayF=false" class="text-gray-400 hover:text-gray-600">✕</button></div>
+    <div class="p-5 space-y-3">
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-sm font-medium text-gray-700 block mb-1">Ödeme Türü</label><select v-model="payFm.type" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"><option value="on_odeme">Ön Ödeme</option><option value="ara_odeme">Ara Ödeme</option><option value="kalan_odeme">Kalan Ödeme</option></select></div>
+        <div><label class="text-sm font-medium text-gray-700 block mb-1">Tutar (₺)</label><input v-model.number="payFm.amount" type="number" min="0" placeholder="0" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"></div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="text-sm font-medium text-gray-700 block mb-1">Tarih</label><input v-model="payFm.date" type="date" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"></div>
+        <div><label class="text-sm font-medium text-gray-700 block mb-1">Ödeme Yöntemi</label><select v-model="payFm.method" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"><option value="">— Seçin —</option><option value="nakit">Nakit</option><option value="havale_eft">Havale / EFT</option><option value="cek">Çek</option><option value="kredi_karti">Kredi Kartı</option></select></div>
+      </div>
+      <div v-if="payFm.method==='havale_eft'"><label class="text-sm font-medium text-gray-700 block mb-1">Referans No</label><input v-model="payFm.referenceNo" placeholder="Banka referans numarası" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"></div>
+      <div v-if="payFm.method==='cek'"><label class="text-sm font-medium text-gray-700 block mb-1">Çek Vadesi</label><input v-model="payFm.checkDate" type="date" class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"></div>
+      <div><label class="text-sm font-medium text-gray-700 block mb-1">Not</label><input v-model="payFm.note" placeholder="Ek açıklama..." class="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#B5803A]"></div>
+      <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" v-model="payFm.sentToAccounting" class="accent-[#5C3A1E] w-4 h-4"><span>Muhasebeye iletildi</span></label>
+    </div>
+    <div class="flex gap-3 px-5 py-4 border-t border-gray-100"><button @click="showPayF=false" class="flex-1 border border-gray-200 text-gray-600 py-2 rounded-lg text-sm">İptal</button><button @click="savePayFm()" class="flex-1 bg-[#5C3A1E] hover:bg-[#7A4E2D] text-white py-2 rounded-lg text-sm font-semibold transition-colors">Kaydet</button></div>
+  </div>
+</div>
+
+</div>
+<script>
+const {createApp,ref,computed,watch}=Vue;
+createApp({setup(){
+const STAGES=[
+  {id:'talep',label:'Talep Alındı'},{id:'kesif',label:'Keşif / Ölçü'},
+  {id:'teklif_hazirlandi',label:'Teklif Hazırlandı'},{id:'teklif_gonderildi',label:'Teklif Gönderildi'},
+  {id:'teklif_onaylandi',label:'Teklif Onaylandı'},{id:'on_odeme',label:'Ön Ödeme Alındı'},
+  {id:'teknik_cizim',label:'Teknik Çizim'},{id:'kartela_onay',label:'Kartela / Örnek Onayı'},
+  {id:'malzeme_tedarik',label:'Malzeme Tedariki'},{id:'uretimde',label:'Üretimde'},
+  {id:'uretim_tamamlandi',label:'Üretim Tamamlandı'},{id:'paketleme',label:'Paketleme'},
+  {id:'teslimat_planlandi',label:'Teslimat Planlandı'},{id:'teslimatta',label:'Teslimat / Kurulum'},
+  {id:'kalan_odeme',label:'Kalan Ödeme Talebi'},{id:'tamamlandi',label:'Tamamlandı'},{id:'iptal',label:'İptal'},
+];
+const PROD_STAGES=[
+  {id:'kurutma',name:'Ahşap Kurutma'},{id:'kesim',name:'Kesim'},
+  {id:'bant_kaplama',name:'Bant / Kaplama'},{id:'zimpara',name:'Zımpara'},
+  {id:'fason_is',name:'Fason İşler'},{id:'montaj',name:'Montaj / Birleştirme'},
+  {id:'boya',name:'Boya / Lake / Vernik'},{id:'paketleme',name:'Paketleme'},
+];
+const pipeCols=[
+  {id:'talep',label:'Talep',bg:'bg-gray-400',ids:['talep','kesif']},
+  {id:'teklif',label:'Teklif',bg:'bg-yellow-500',ids:['teklif_hazirlandi','teklif_gonderildi']},
+  {id:'onay',label:'Onaylandı',bg:'bg-lime-600',ids:['teklif_onaylandi','on_odeme','teknik_cizim','kartela_onay']},
+  {id:'uretim',label:'Üretim',bg:'bg-indigo-500',ids:['malzeme_tedarik','uretimde','uretim_tamamlandi','paketleme']},
+  {id:'teslimat',label:'Teslimat',bg:'bg-blue-500',ids:['teslimat_planlandi','teslimatta','kalan_odeme']},
+  {id:'tamam',label:'Tamamlandı',bg:'bg-emerald-600',ids:['tamamlandi']},
+];
+const dtabs=[
+  {id:'genel',label:'Genel'},{id:'uretim',label:'Üretim & Fason'},
+  {id:'malzeme',label:'Malzeme'},{id:'teslimat',label:'Teslimat'},
+  {id:'odemeler',label:'Ödemeler'},{id:'degisiklikler',label:'Değişiklikler'},
+  {id:'notlar',label:'Notlar'},
+];
+
+const stgIdx =id=>STAGES.findIndex(s=>s.id===id);
+const stgLbl =id=>STAGES.find(s=>s.id===id)?.label||id;
+const stageClr=id=>({talep:'bg-gray-400',kesif:'bg-sky-400',teklif_hazirlandi:'bg-yellow-400',teklif_gonderildi:'bg-yellow-500',teklif_onaylandi:'bg-lime-500',on_odeme:'bg-green-500',teknik_cizim:'bg-violet-400',kartela_onay:'bg-pink-400',malzeme_tedarik:'bg-orange-400',uretimde:'bg-indigo-500',uretim_tamamlandi:'bg-teal-400',paketleme:'bg-teal-500',teslimat_planlandi:'bg-cyan-400',teslimatta:'bg-blue-500',kalan_odeme:'bg-orange-500',tamamlandi:'bg-emerald-500',iptal:'bg-red-400'}[id]||'bg-gray-300');
+const stageBdg=id=>({talep:'bg-gray-100 text-gray-700',kesif:'bg-sky-100 text-sky-700',teklif_hazirlandi:'bg-yellow-100 text-yellow-700',teklif_gonderildi:'bg-yellow-100 text-yellow-700',teklif_onaylandi:'bg-lime-100 text-lime-700',on_odeme:'bg-green-100 text-green-700',teknik_cizim:'bg-violet-100 text-violet-700',kartela_onay:'bg-pink-100 text-pink-700',malzeme_tedarik:'bg-orange-100 text-orange-700',uretimde:'bg-indigo-100 text-indigo-700',uretim_tamamlandi:'bg-teal-100 text-teal-700',paketleme:'bg-teal-100 text-teal-700',teslimat_planlandi:'bg-cyan-100 text-cyan-700',teslimatta:'bg-blue-100 text-blue-700',kalan_odeme:'bg-orange-100 text-orange-700',tamamlandi:'bg-emerald-100 text-emerald-700',iptal:'bg-red-100 text-red-700'}[id]||'bg-gray-100 text-gray-600');
+const urgencyLabel=u=>({dusuk:'Düşük',orta:'Orta',yuksek:'Yüksek',kritik:'KRİTİK'}[u]||u);
+const urgencyBadge=u=>({dusuk:'bg-green-100 text-green-700',orta:'bg-yellow-100 text-yellow-700',yuksek:'bg-red-100 text-red-700',kritik:'bg-gray-900 text-white'}[u]||'bg-gray-100 text-gray-700');
+const payLbl=t=>({on_odeme:'Ön Ödeme',ara_odeme:'Ara Ödeme',kalan_odeme:'Kalan Ödeme'}[t]||t);
+const methodLbl=m=>({nakit:'Nakit',havale_eft:'Havale/EFT',cek:'Çek',kredi_karti:'Kredi Kartı'}[m]||m);
+
+// Persistence
+const KEY='noyan_v3';
+const load=()=>{try{const d=localStorage.getItem(KEY);return d?JSON.parse(d):null;}catch{return null;}};
+const saved=load();
+const customers=ref(saved?.customers||[]);
+const projects=ref(saved?.projects||[]);
+watch([customers,projects],()=>localStorage.setItem(KEY,JSON.stringify({customers:customers.value,projects:projects.value})),{deep:true});
+
+// Utils
+const uid=()=>Math.random().toString(36).substr(2,9);
+const today=new Date();
+const todayStr=today.toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+const fmtM=v=>v?'₺'+Number(v).toLocaleString('tr-TR'):'₺0';
+const fmtD=d=>d?new Date(d).toLocaleDateString('tr-TR',{day:'numeric',month:'short',year:'numeric'}):'';
+const fmtDT=d=>d?new Date(d).toLocaleString('tr-TR',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+const isOD=d=>d&&new Date(d)<today;
+const getCust=id=>customers.value.find(c=>c.id===id);
+const cProjCnt=id=>projects.value.filter(p=>p.customerId===id).length;
+const batchTotal=f=>(f.batches||[]).reduce((s,b)=>s+(b.quantity||0),0);
+
+// Nav
+const sb=ref(true);
+const view=ref('dashboard');
+const mkI=d=>`<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="${d}"/></svg>`;
+const nav=[
+  {id:'dashboard',label:'Dashboard',icon:mkI('M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6')},
+  {id:'projects',label:'Projeler',icon:mkI('M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2')},
+  {id:'customers',label:'Müşteriler',icon:mkI('M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z')},
+  {id:'payments',label:'Ödemeler',icon:mkI('M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z')},
+];
+
+// Dashboard
+const projAlerts=id=>{const p=projects.value.find(x=>x.id===id);return(p?.changeAlerts||[]).filter(a=>!a.resolvedAt).length;};
+const activeAlerts=computed(()=>projects.value.reduce((s,p)=>s+projAlerts(p.id),0));
+const allActiveAlerts=computed(()=>projects.value.flatMap(p=>(p.changeAlerts||[]).filter(a=>!a.resolvedAt).map(a=>({...a,uid:a.id+p.id,projectTitle:p.title,projectId:p.id}))).sort((a,b)=>({kritik:0,yuksek:1,orta:2,dusuk:3}[a.urgency]-{kritik:0,yuksek:1,orta:2,dusuk:3}[b.urgency])));
+const monthColl=computed(()=>{const m=today.getMonth(),y=today.getFullYear();return projects.value.flatMap(p=>p.payments||[]).filter(p=>{const d=new Date(p.date);return d.getMonth()===m&&d.getFullYear()===y;}).reduce((s,p)=>s+(p.amount||0),0);});
+const pipePs=ids=>projects.value.filter(p=>ids.includes(p.status));
+const recentPs=computed(()=>[...projects.value].sort((a,b)=>new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt)).slice(0,7));
+const pendingAcct=computed(()=>projects.value.flatMap(p=>(p.payments||[]).filter(pay=>!pay.sentToAccounting).map(pay=>({...pay,projectTitle:p.title,projectId:p.id,payId:pay.id}))).sort((a,b)=>new Date(b.date)-new Date(a.date)));
+
+// Lists
+const pQ=ref(''),pF=ref('');
+const filtPs=computed(()=>{let l=projects.value;if(pQ.value){const q=pQ.value.toLowerCase();l=l.filter(p=>p.title.toLowerCase().includes(q)||getCust(p.customerId)?.name?.toLowerCase().includes(q));}if(pF.value)l=l.filter(p=>p.status===pF.value);return[...l].sort((a,b)=>new Date(b.updatedAt||b.createdAt)-new Date(a.updatedAt||a.createdAt));});
+const cQ=ref('');
+const filtCs=computed(()=>{if(!cQ.value)return customers.value;const q=cQ.value.toLowerCase();return customers.value.filter(c=>c.name.toLowerCase().includes(q)||(c.phone||'').includes(q));});
+const allPays=computed(()=>projects.value.flatMap(p=>(p.payments||[]).map(pay=>({...pay,uid:pay.id+p.id,projectTitle:p.title,projectId:p.id}))).sort((a,b)=>new Date(b.date)-new Date(a.date)));
+const totColl=computed(()=>allPays.value.reduce((s,p)=>s+(p.amount||0),0));
+const totVal=computed(()=>projects.value.reduce((s,p)=>s+(p.totalAmount||0),0));
+const totPend=computed(()=>totVal.value-totColl.value);
+
+// Detail
+const detail=ref(null);
+const dtab=ref('genel');
+const noteV=ref('');
+const alertForm=ref({description:'',urgency:'orta',affectedInHouse:true,affectedFasonIds:[]});
+
+const openDetail=id=>{detail.value=projects.value.find(p=>p.id===id)||null;dtab.value='genel';noteV.value='';alertForm.value={description:'',urgency:'orta',affectedInHouse:true,affectedFasonIds:[]};};
+const dColl=computed(()=>(detail.value?.payments||[]).reduce((s,p)=>s+(p.amount||0),0));
+const getFasonName=fid=>{const f=(detail.value?.fasonItems||[]).find(x=>x.id===fid);return f?.supplierName||'Fason';};
+
+const saveP=()=>{if(!detail.value)return;const idx=projects.value.findIndex(p=>p.id===detail.value.id);if(idx>=0){projects.value[idx]={...detail.value,updatedAt:new Date().toISOString()};detail.value=projects.value[idx];}};
+const setSt=s=>{if(!detail.value)return;const idx=projects.value.findIndex(p=>p.id===detail.value.id);if(idx<0)return;if(!projects.value[idx].statusHistory)projects.value[idx].statusHistory=[];projects.value[idx].statusHistory.push({stage:s,date:new Date().toISOString()});projects.value[idx].status=s;projects.value[idx].updatedAt=new Date().toISOString();detail.value=projects.value[idx];};
+const setStgSt=(st,v)=>{st.status=v;if(v==='tamamlandi')st.completedDate=new Date().toISOString().split('T')[0];saveP();};
+const setQC=(st,v)=>{st.qcStatus=st.qcStatus===v?null:v;saveP();};
+const addNote=()=>{if(!noteV.value.trim()||!detail.value)return;const idx=projects.value.findIndex(p=>p.id===detail.value.id);if(idx<0)return;if(!projects.value[idx].notes)projects.value[idx].notes=[];projects.value[idx].notes.push({id:uid(),text:noteV.value.trim(),date:new Date().toISOString()});projects.value[idx].updatedAt=new Date().toISOString();detail.value=projects.value[idx];noteV.value='';};
+const toggleAcct=pay=>{if(!detail.value)return;const idx=projects.value.findIndex(p=>p.id===detail.value.id);if(idx<0)return;const pi=projects.value[idx].payments.findIndex(p=>p.id===pay.id);if(pi<0)return;projects.value[idx].payments[pi].sentToAccounting=!projects.value[idx].payments[pi].sentToAccounting;detail.value=projects.value[idx];};
+const delProj=()=>{if(!detail.value||!confirm(`"${detail.value.title}" projesini silmek istediğinizden emin misiniz?`))return;projects.value=projects.value.filter(p=>p.id!==detail.value.id);detail.value=null;};
+
+// Fason
+const addFason=()=>{if(!detail.value)return;const idx=projects.value.findIndex(p=>p.id===detail.value.id);if(idx<0)return;if(!projects.value[idx].fasonItems)projects.value[idx].fasonItems=[];projects.value[idx].fasonItems.push({id:uid(),supplierName:'',type:'',totalQuantity:0,unit:'adet',quotedAmount:0,finalAmount:0,workOrderDate:'',workOrderSent:false,materialSent:false,prepaymentAmount:0,prepaymentDate:'',invoicePaid:false,batches:[],visits:[],notes:''});detail.value=projects.value[idx];};
+const removeFason=fid=>{if(!detail.value)return;const idx=projects.value.findIndex(p=>p.id===detail.value.id);if(idx<0)return;projects.value[idx].fasonItems=projects.value[idx].fasonItems.filter(f=>f.id!==fid);detail.value=projects.value[idx];};
+const addBatch=f=>{if(!f.batches)f.batches=[];f.batches.push({id:uid(),quantity:0,sentDate:'',receivedDate:'',nextProcess:'',status:'bekleniyor',notes:''});saveP();};
+const removeBatch=(f,bid)=>{f.batches=f.batches.filter(b=>b.id!==bid);saveP();};
+const addVisit=f=>{if(!f.visits)f.visits=[];f.visits.push({id:uid(),date:'',notes:''});saveP();};
+const removeVisit=(f,vid)=>{f.visits=f.visits.filter(v=>v.id!==vid);saveP();};
+
+// Materials
+const addMat=()=>{if(!detail.value)return;const idx=projects.value.findIndex(p=>p.id===detail.value.id);if(idx<0)return;if(!projects.value[idx].materials)projects.value[idx].materials=[];projects.value[idx].materials.push({id:uid(),name:'',quantity:1,unit:'adet',supplier:'',orderDate:'',expectedDelivery:'',status:'bekliyor',isFromStock:false});detail.value=projects.value[idx];};
+const removeMat=mid=>{if(!detail.value)return;const idx=projects.value.findIndex(p=>p.id===detail.value.id);if(idx<0)return;projects.value[idx].materials=projects.value[idx].materials.filter(m=>m.id!==mid);detail.value=projects.value[idx];};
+
+// Delivery
+const addTM=()=>{if(!detail.value)return;if(!detail.value.delivery.team)detail.value.delivery.team=[];detail.value.delivery.team.push({id:uid(),name:'',role:''});saveP();};
+const removeTM=id=>{if(!detail.value)return;detail.value.delivery.team=detail.value.delivery.team.filter(m=>m.id!==id);saveP();};
+const addExp=()=>{if(!detail.value)return;if(!detail.value.delivery.expenses)detail.value.delivery.expenses=[];detail.value.delivery.expenses.push({id:uid(),type:'',amount:0});saveP();};
+const removeExp=id=>{if(!detail.value)return;detail.value.delivery.expenses=detail.value.delivery.expenses.filter(e=>e.id!==id);saveP();};
+
+// Alerts
+const addAlert=()=>{
+  if(!alertForm.value.description.trim()||!detail.value)return;
+  const idx=projects.value.findIndex(p=>p.id===detail.value.id);if(idx<0)return;
+  if(!projects.value[idx].changeAlerts)projects.value[idx].changeAlerts=[];
+  projects.value[idx].changeAlerts.push({id:uid(),date:new Date().toISOString(),description:alertForm.value.description.trim(),urgency:alertForm.value.urgency,affectedInHouse:alertForm.value.affectedInHouse,affectedFasonIds:[...alertForm.value.affectedFasonIds],notifiedInHouse:false,notifiedFason:{},resolvedAt:null});
+  projects.value[idx].updatedAt=new Date().toISOString();
+  detail.value=projects.value[idx];
+  alertForm.value={description:'',urgency:'orta',affectedInHouse:true,affectedFasonIds:[]};
+};
+const resolveAlert=aid=>{if(!detail.value)return;const idx=projects.value.findIndex(p=>p.id===detail.value.id);if(idx<0)return;const ai=projects.value[idx].changeAlerts.findIndex(a=>a.id===aid);if(ai<0)return;projects.value[idx].changeAlerts[ai].resolvedAt=new Date().toISOString();projects.value[idx].updatedAt=new Date().toISOString();detail.value=projects.value[idx];};
+const toggleNotif=(a,party)=>{if(!detail.value)return;const idx=projects.value.findIndex(p=>p.id===detail.value.id);if(idx<0)return;const ai=projects.value[idx].changeAlerts.findIndex(x=>x.id===a.id);if(ai<0)return;if(party==='inhouse'){projects.value[idx].changeAlerts[ai].notifiedInHouse=!projects.value[idx].changeAlerts[ai].notifiedInHouse;}else{if(!projects.value[idx].changeAlerts[ai].notifiedFason)projects.value[idx].changeAlerts[ai].notifiedFason={};projects.value[idx].changeAlerts[ai].notifiedFason[party]=!projects.value[idx].changeAlerts[ai].notifiedFason[party];}detail.value=projects.value[idx];saveP();};
+
+// Project form
+const showPF=ref(false);const pF2=ref({});
+const newProj=()=>{pF2.value={id:'',title:'',customerId:'',totalAmount:0,deliveryDate:'',status:'talep',deliveryType:'kurulum',description:''};showPF.value=true;};
+const startEdit=proj=>{pF2.value={...proj};showPF.value=true;};
+const savePF=()=>{const f=pF2.value;if(!f.title.trim()){alert('Proje başlığı zorunlu.');return;}if(!f.customerId){alert('Müşteri seçiniz.');return;}const now=new Date().toISOString();if(f.id){const idx=projects.value.findIndex(p=>p.id===f.id);if(idx>=0){projects.value[idx]={...projects.value[idx],...f,updatedAt:now};if(detail.value?.id===f.id)detail.value=projects.value[idx];}}else{projects.value.unshift({...f,id:uid(),payments:[],notes:[],statusHistory:[{stage:f.status||'talep',date:now}],productionStages:PROD_STAGES.map(s=>({...s,status:'bekliyor',qcStatus:null,qcNotes:'',completedDate:null})),fasonItems:[],materials:[],changeAlerts:[],delivery:{plannedDate:'',actualDate:'',address:'',team:[],expenses:[],handoverSigned:false,notes:''},createdAt:now,updatedAt:now});}showPF.value=false;};
+const custForP=ref(false);
+const newCustFP=()=>{custForP.value=true;cF2.value={id:'',name:'',phone:'',email:'',address:'',notes:''};showCF.value=true;};
+
+// Naming fix - pF is used as filter ref above, rename project form refs
+const pF=ref(''); // filter (for projects list)
+// redefine for form
+const showPFm=showPF; const pFm=pF2; // aliases
+
+// Customer form
+const showCF=ref(false);const cF2=ref({});const custFP=ref(false);
+const newCust=()=>{custFP.value=false;cF2.value={id:'',name:'',phone:'',email:'',address:'',notes:''};showCF.value=true;};
+const editCust=c=>{custFP.value=false;cF2.value={...c};showCF.value=true;};
+const saveCF=()=>{const f=cF2.value;if(!f.name.trim()){alert('Müşteri adı zorunlu.');return;}if(f.id){const idx=customers.value.findIndex(c=>c.id===f.id);if(idx>=0)customers.value[idx]={...f};}else{const nc={...f,id:uid(),createdAt:new Date().toISOString()};customers.value.unshift(nc);if(custForP.value||custFP.value)pF2.value.customerId=nc.id;}showCF.value=false;if(custForP.value||custFP.value)showPF.value=true;};
+
+// Payment form
+const showPayF=ref(false);const payFm2=ref({});
+const openAddPay=()=>{payFm2.value={type:'on_odeme',amount:0,date:today.toISOString().split('T')[0],method:'',referenceNo:'',checkDate:'',note:'',sentToAccounting:false};showPayF.value=true;};
+const savePayFm=()=>{const f=payFm2.value;if(!f.amount||f.amount<=0){alert('Geçerli bir tutar girin.');return;}if(!detail.value)return;const idx=projects.value.findIndex(p=>p.id===detail.value.id);if(idx<0)return;if(!projects.value[idx].payments)projects.value[idx].payments=[];projects.value[idx].payments.push({...f,id:uid()});projects.value[idx].updatedAt=new Date().toISOString();detail.value=projects.value[idx];showPayF.value=false;};
+
+return{
+  STAGES,pipeCols,dtabs,stgIdx,stgLbl,stageClr,stageBdg,urgencyLabel,urgencyBadge,payLbl,methodLbl,batchTotal,getFasonName,
+  sb,view,nav,todayStr,customers,projects,fmtM,fmtD,fmtDT,isOD,getCust,cProjCnt,
+  activeAlerts,allActiveAlerts,projAlerts,monthColl,pipePs,recentPs,pendingAcct,
+  pQ,pF,filtPs,cQ,filtCs,allPays,totColl,totVal,totPend,
+  detail,dtab,noteV,alertForm,dColl,openDetail,saveP,setSt,setStgSt,setQC,addNote,toggleAcct,delProj,startEdit,
+  addFason,removeFason,addBatch,removeBatch,addVisit,removeVisit,
+  addMat,removeMat,addTM,removeTM,addExp,removeExp,
+  addAlert,resolveAlert,toggleNotif,
+  showPF,pF:pF2,newProj,savePF,newCustFP,
+  showCF,cF:cF2,newCust,editCust,saveCF,
+  showPayF,payFm:payFm2,openAddPay,savePayFm,
+};
+}}).mount('#app');
+</script>
+</body>
+</html>
