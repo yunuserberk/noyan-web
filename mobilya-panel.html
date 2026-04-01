@@ -6,6 +6,7 @@
 <title>Noyan Furniture – Proje Paneli</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/vue@3.4.21/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
 [v-cloak]{display:none}
 .st{transition:width .22s ease}
@@ -21,6 +22,11 @@
 </head>
 <body class="bg-[#F7F3EE] antialiased text-[#1C1008]" style="font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue','Inter',Arial,sans-serif">
 <div id="app" v-cloak>
+<!-- DB Loading overlay -->
+<div v-if="dbLoading" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#F7F3EE]">
+  <div class="w-10 h-10 border-4 border-[#E2D9CE] border-t-[#5C3A1E] rounded-full animate-spin mb-4"></div>
+  <p class="text-[#5C3A1E] font-medium text-sm">Veriler yükleniyor…</p>
+</div>
 <div class="flex h-screen overflow-hidden">
 
 <!-- SIDEBAR -->
@@ -769,14 +775,18 @@ const urgencyBadge=u=>({dusuk:'bg-green-100 text-green-700',orta:'bg-yellow-100 
 const payLbl=t=>({on_odeme:'Ön Ödeme',ara_odeme:'Ara Ödeme',kalan_odeme:'Kalan Ödeme'}[t]||t);
 const methodLbl=m=>({nakit:'Nakit',havale_eft:'Havale/EFT',cek:'Çek',kredi_karti:'Kredi Kartı'}[m]||m);
 
-// Persistence
-const KEY='noyan_v3';
-const load=()=>{try{const d=localStorage.getItem(KEY);return d?JSON.parse(d):null;}catch{return null;}};
-const saved=load();
-const customers=ref(saved?.customers||[]);
-const projects=ref(saved?.projects||[]);
-watch([customers,projects],()=>localStorage.setItem(KEY,JSON.stringify({customers:customers.value,projects:projects.value})),{deep:true});
-
+// Persistence – Supabase
+const SUPA_URL='https://hbupascffmzzatawnsjp.supabase.co';
+const SUPA_KEY='sb_publishable_cd5VWbD1K7FEpHMn2wx4sg_u9WT8Bvi';
+const db=supabase.createClient(SUPA_URL,SUPA_KEY);
+const customers=ref([]);
+const projects=ref([]);
+const dbLoading=ref(true);
+const pToDb=p=>({id:p.id,customer_id:p.customerId||null,title:p.title||'',status:p.status||'talep',total_amount:p.totalAmount||0,delivery_date:p.deliveryDate||'',delivery_type:p.deliveryType||'kurulum',description:p.description||'',status_history:p.statusHistory||[],production_stages:p.productionStages||[],fason_items:p.fasonItems||[],materials:p.materials||[],change_alerts:p.changeAlerts||[],delivery_info:p.delivery||{},payments:p.payments||[],notes:p.notes||[],created_at:p.createdAt||new Date().toISOString(),updated_at:new Date().toISOString()});
+const dbToP=r=>({id:r.id,customerId:r.customer_id,title:r.title,status:r.status,totalAmount:r.total_amount,deliveryDate:r.delivery_date,deliveryType:r.delivery_type,description:r.description,statusHistory:r.status_history||[],productionStages:r.production_stages||[],fasonItems:r.fason_items||[],materials:r.materials||[],changeAlerts:r.change_alerts||[],delivery:r.delivery_info||{},payments:r.payments||[],notes:r.notes||[],createdAt:r.created_at,updatedAt:r.updated_at});
+const cToDb=c=>({id:c.id,name:c.name,phone:c.phone||'',email:c.email||'',address:c.address||'',notes:c.notes||'',created_at:c.createdAt||new Date().toISOString()});
+const dbToC=r=>({id:r.id,name:r.name,phone:r.phone,email:r.email,address:r.address,notes:r.notes,createdAt:r.created_at});
+(async()=>{const[cr,pr]=await Promise.all([db.from('customers').select('*').order('created_at',{ascending:false}),db.from('projects').select('*').order('created_at',{ascending:false})]);if(cr.data)customers.value=cr.data.map(dbToC);if(pr.data)projects.value=pr.data.map(dbToP);dbLoading.value=false;})();
 // Utils
 const uid=()=>Math.random().toString(36).substr(2,9);
 const today=new Date();
@@ -821,6 +831,7 @@ const totPend=computed(()=>totVal.value-totColl.value);
 
 // Detail
 const detail=ref(null);
+let _dt=null;watch(detail,(v)=>{if(!v)return;clearTimeout(_dt);_dt=setTimeout(()=>db.from('projects').upsert(pToDb(v)),900);},{deep:true});
 const dtab=ref('genel');
 const noteV=ref('');
 const alertForm=ref({description:'',urgency:'orta',affectedInHouse:true,affectedFasonIds:[]});
@@ -835,7 +846,7 @@ const setStgSt=(st,v)=>{st.status=v;if(v==='tamamlandi')st.completedDate=new Dat
 const setQC=(st,v)=>{st.qcStatus=st.qcStatus===v?null:v;saveP();};
 const addNote=()=>{if(!noteV.value.trim()||!detail.value)return;const idx=projects.value.findIndex(p=>p.id===detail.value.id);if(idx<0)return;if(!projects.value[idx].notes)projects.value[idx].notes=[];projects.value[idx].notes.push({id:uid(),text:noteV.value.trim(),date:new Date().toISOString()});projects.value[idx].updatedAt=new Date().toISOString();detail.value=projects.value[idx];noteV.value='';};
 const toggleAcct=pay=>{if(!detail.value)return;const idx=projects.value.findIndex(p=>p.id===detail.value.id);if(idx<0)return;const pi=projects.value[idx].payments.findIndex(p=>p.id===pay.id);if(pi<0)return;projects.value[idx].payments[pi].sentToAccounting=!projects.value[idx].payments[pi].sentToAccounting;detail.value=projects.value[idx];};
-const delProj=()=>{if(!detail.value||!confirm(`"${detail.value.title}" projesini silmek istediğinizden emin misiniz?`))return;projects.value=projects.value.filter(p=>p.id!==detail.value.id);detail.value=null;};
+const delProj=()=>{if(!detail.value||!confirm(`"${detail.value.title}" projesini silmek istediğinizden emin misiniz?`))return;const did=detail.value.id;projects.value=projects.value.filter(p=>p.id!==did);detail.value=null;db.from('projects').delete().eq('id',did);};
 
 // Fason
 const addFason=()=>{if(!detail.value)return;const idx=projects.value.findIndex(p=>p.id===detail.value.id);if(idx<0)return;if(!projects.value[idx].fasonItems)projects.value[idx].fasonItems=[];projects.value[idx].fasonItems.push({id:uid(),supplierName:'',type:'',totalQuantity:0,unit:'adet',quotedAmount:0,finalAmount:0,workOrderDate:'',workOrderSent:false,materialSent:false,prepaymentAmount:0,prepaymentDate:'',invoicePaid:false,batches:[],visits:[],notes:''});detail.value=projects.value[idx];};
@@ -872,7 +883,7 @@ const toggleNotif=(a,party)=>{if(!detail.value)return;const idx=projects.value.f
 const showPF=ref(false);const pF2=ref({});
 const newProj=()=>{pF2.value={id:'',title:'',customerId:'',totalAmount:0,deliveryDate:'',status:'talep',deliveryType:'kurulum',description:''};showPF.value=true;};
 const startEdit=proj=>{pF2.value={...proj};showPF.value=true;};
-const savePF=()=>{const f=pF2.value;if(!f.title.trim()){alert('Proje başlığı zorunlu.');return;}if(!f.customerId){alert('Müşteri seçiniz.');return;}const now=new Date().toISOString();if(f.id){const idx=projects.value.findIndex(p=>p.id===f.id);if(idx>=0){projects.value[idx]={...projects.value[idx],...f,updatedAt:now};if(detail.value?.id===f.id)detail.value=projects.value[idx];}}else{projects.value.unshift({...f,id:uid(),payments:[],notes:[],statusHistory:[{stage:f.status||'talep',date:now}],productionStages:PROD_STAGES.map(s=>({...s,status:'bekliyor',qcStatus:null,qcNotes:'',completedDate:null})),fasonItems:[],materials:[],changeAlerts:[],delivery:{plannedDate:'',actualDate:'',address:'',team:[],expenses:[],handoverSigned:false,notes:''},createdAt:now,updatedAt:now});}showPF.value=false;};
+const savePF=()=>{const f=pF2.value;if(!f.title.trim()){alert('Proje başlığı zorunlu.');return;}if(!f.customerId){alert('Müşteri seçiniz.');return;}const now=new Date().toISOString();if(f.id){const idx=projects.value.findIndex(p=>p.id===f.id);if(idx>=0){projects.value[idx]={...projects.value[idx],...f,updatedAt:now};if(detail.value?.id===f.id)detail.value=projects.value[idx];db.from('projects').upsert(pToDb(projects.value[idx]));}}else{const np={...f,id:uid(),payments:[],notes:[],statusHistory:[{stage:f.status||'talep',date:now}],productionStages:PROD_STAGES.map(s=>({...s,status:'bekliyor',qcStatus:null,qcNotes:'',completedDate:null})),fasonItems:[],materials:[],changeAlerts:[],delivery:{plannedDate:'',actualDate:'',address:'',team:[],expenses:[],handoverSigned:false,notes:''},createdAt:now,updatedAt:now};projects.value.unshift(np);db.from('projects').upsert(pToDb(np));}showPF.value=false;};
 const custForP=ref(false);
 const newCustFP=()=>{custForP.value=true;cF2.value={id:'',name:'',phone:'',email:'',address:'',notes:''};showCF.value=true;};
 
@@ -885,7 +896,7 @@ const showPFm=showPF; const pFm=pF2; // aliases
 const showCF=ref(false);const cF2=ref({});const custFP=ref(false);
 const newCust=()=>{custFP.value=false;cF2.value={id:'',name:'',phone:'',email:'',address:'',notes:''};showCF.value=true;};
 const editCust=c=>{custFP.value=false;cF2.value={...c};showCF.value=true;};
-const saveCF=()=>{const f=cF2.value;if(!f.name.trim()){alert('Müşteri adı zorunlu.');return;}if(f.id){const idx=customers.value.findIndex(c=>c.id===f.id);if(idx>=0)customers.value[idx]={...f};}else{const nc={...f,id:uid(),createdAt:new Date().toISOString()};customers.value.unshift(nc);if(custForP.value||custFP.value)pF2.value.customerId=nc.id;}showCF.value=false;if(custForP.value||custFP.value)showPF.value=true;};
+const saveCF=()=>{const f=cF2.value;if(!f.name.trim()){alert('Müşteri adı zorunlu.');return;}if(f.id){const idx=customers.value.findIndex(c=>c.id===f.id);if(idx>=0){customers.value[idx]={...f};db.from('customers').upsert(cToDb(customers.value[idx]));}}else{const nc={...f,id:uid(),createdAt:new Date().toISOString()};customers.value.unshift(nc);if(custForP.value||custFP.value)pF2.value.customerId=nc.id;db.from('customers').upsert(cToDb(nc));}showCF.value=false;if(custForP.value||custFP.value)showPF.value=true;};
 
 // Payment form
 const showPayF=ref(false);const payFm2=ref({});
@@ -894,7 +905,7 @@ const savePayFm=()=>{const f=payFm2.value;if(!f.amount||f.amount<=0){alert('Geç
 
 return{
   STAGES,pipeCols,dtabs,stgIdx,stgLbl,stageClr,stageBdg,urgencyLabel,urgencyBadge,payLbl,methodLbl,batchTotal,getFasonName,
-  sb,view,nav,todayStr,customers,projects,fmtM,fmtD,fmtDT,isOD,getCust,cProjCnt,
+  sb,view,nav,todayStr,customers,projects,dbLoading,fmtM,fmtD,fmtDT,isOD,getCust,cProjCnt,
   activeAlerts,allActiveAlerts,projAlerts,monthColl,pipePs,recentPs,pendingAcct,
   pQ,pF,filtPs,cQ,filtCs,allPays,totColl,totVal,totPend,
   detail,dtab,noteV,alertForm,dColl,openDetail,saveP,setSt,setStgSt,setQC,addNote,toggleAcct,delProj,startEdit,
